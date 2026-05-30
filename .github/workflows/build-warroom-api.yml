@@ -35,7 +35,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./02-apps/warroom-api
+          file: ./02-apps/warroom-api/Dockerfile
           push: true
+          no-cache: true
           tags: |
             ghcr.io/usomarriba22/con-warroom-api:dev
             ghcr.io/usomarriba22/con-warroom-api:${{ github.sha }}
