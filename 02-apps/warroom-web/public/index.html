@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CON War Room</title>
+  <title>CON War Room Multi-Partida</title>
   <style>
     :root {
-      --bg: #050b12;
-      --panel: rgba(8, 20, 32, 0.88);
-      --panel2: rgba(13, 35, 52, 0.86);
+      --bg: #04070d;
+      --panel: rgba(8, 20, 32, 0.92);
+      --panel2: rgba(10, 28, 43, 0.92);
       --green: #3dff9b;
       --cyan: #36d9ff;
       --red: #ff4d5f;
@@ -24,12 +24,11 @@
       margin: 0;
       min-height: 100vh;
       background:
-        radial-gradient(circle at 15% 20%, rgba(54,217,255,.16), transparent 28%),
-        radial-gradient(circle at 80% 10%, rgba(61,255,155,.10), transparent 26%),
-        linear-gradient(135deg, #03060a 0%, #07111d 48%, #02040a 100%);
+        radial-gradient(circle at 18% 12%, rgba(54,217,255,.15), transparent 30%),
+        radial-gradient(circle at 80% 8%, rgba(61,255,155,.10), transparent 24%),
+        linear-gradient(135deg, #02040a 0%, #07111d 48%, #02040a 100%);
       color: var(--text);
-      font-family: Inter, Segoe UI, Arial, sans-serif;
-      overflow-x: hidden;
+      font-family: Segoe UI, Inter, Arial, sans-serif;
     }
 
     body::before {
@@ -37,81 +36,69 @@
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(54,217,255,.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(54,217,255,.07) 1px, transparent 1px);
+        linear-gradient(rgba(54,217,255,.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(54,217,255,.055) 1px, transparent 1px);
       background-size: 42px 42px;
-      mask-image: radial-gradient(circle at center, black 0%, transparent 78%);
       pointer-events: none;
+      mask-image: radial-gradient(circle at center, black 0%, transparent 80%);
     }
 
     .shell {
-      max-width: 1440px;
+      max-width: 1500px;
       margin: 0 auto;
-      padding: 28px;
+      padding: 24px;
     }
 
     .topbar {
       display: flex;
       justify-content: space-between;
-      gap: 20px;
+      gap: 16px;
       align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .brand {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .brand h1 {
-      margin: 0;
-      font-size: 34px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      text-shadow: 0 0 18px rgba(54,217,255,.65);
-    }
-
-    .brand span {
-      color: var(--muted);
-      letter-spacing: 3px;
-      font-size: 12px;
-      text-transform: uppercase;
-    }
-
-    .status-pill {
-      border: 1px solid var(--border);
-      background: rgba(54,217,255,.08);
-      border-radius: 999px;
-      padding: 10px 14px;
-      color: var(--green);
-      box-shadow: 0 0 22px rgba(61,255,155,.12);
-      font-weight: 700;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1.25fr .75fr;
-      gap: 18px;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(150px, 1fr));
-      gap: 14px;
       margin-bottom: 18px;
     }
 
-    .card, .panel {
+    h1 {
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 34px;
+      text-shadow: 0 0 18px rgba(54,217,255,.55);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .pill {
       border: 1px solid var(--border);
-      background: linear-gradient(180deg, var(--panel), rgba(4,10,18,.9));
+      border-radius: 999px;
+      padding: 9px 13px;
+      background: rgba(54,217,255,.08);
+      color: var(--green);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 300px 1fr 380px;
+      gap: 16px;
+    }
+
+    .panel, .card {
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel), rgba(3,9,16,.92));
       border-radius: 18px;
-      padding: 18px;
-      box-shadow: 0 12px 45px rgba(0,0,0,.35), inset 0 0 28px rgba(54,217,255,.035);
+      padding: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.34), inset 0 0 24px rgba(54,217,255,.04);
       backdrop-filter: blur(10px);
     }
 
-    .card h3, .panel h2 {
+    h2, h3 {
       margin: 0 0 12px 0;
       font-size: 13px;
       color: var(--muted);
@@ -119,93 +106,50 @@
       text-transform: uppercase;
     }
 
-    .metric {
-      font-size: 30px;
-      font-weight: 800;
-      color: var(--text);
-    }
-
-    .sub {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .critical { color: var(--red); }
-    .low { color: var(--amber); }
-    .stable { color: var(--green); }
-
-    .resource-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(220px, 1fr));
-      gap: 12px;
-    }
-
-    .resource {
-      padding: 14px;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 14px;
-      background: rgba(255,255,255,.035);
+    .game-list {
       display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .resource strong {
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .resource .value {
-      font-size: 22px;
-      font-weight: 800;
-    }
-
-    .front {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      padding: 12px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-    }
-
-    .front:last-child { border-bottom: 0; }
-
-    .tag {
-      padding: 5px 9px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      font-size: 12px;
-      color: var(--cyan);
-    }
-
-    .alert {
-      border-left: 3px solid var(--red);
-      padding: 10px 12px;
-      background: rgba(255,77,95,.08);
-      margin-bottom: 8px;
-      border-radius: 10px;
-    }
-
-    .input-row {
-      display: flex;
+      flex-direction: column;
       gap: 10px;
-      margin-bottom: 18px;
     }
 
-    input {
-      flex: 1;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      background: rgba(0,0,0,.35);
+    .game-btn {
+      text-align: left;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.035);
       color: var(--text);
+      cursor: pointer;
+    }
+
+    .game-btn.active {
+      border-color: var(--cyan);
+      background: rgba(54,217,255,.13);
+      box-shadow: 0 0 20px rgba(54,217,255,.14);
+    }
+
+    .game-btn strong { display: block; margin-bottom: 4px; }
+    .game-btn span { color: var(--muted); font-size: 12px; }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid rgba(54,217,255,.25);
       border-radius: 12px;
+      background: rgba(0,0,0,.32);
+      color: var(--text);
       outline: none;
     }
 
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+    }
+
     button {
-      padding: 12px 16px;
+      padding: 10px 12px;
       border: 1px solid var(--cyan);
       border-radius: 12px;
       background: rgba(54,217,255,.12);
@@ -213,184 +157,530 @@
       font-weight: 800;
       cursor: pointer;
       text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+
+    button:hover { background: rgba(54,217,255,.22); }
+
+    .danger {
+      border-color: var(--red);
+      color: var(--red);
+      background: rgba(255,77,95,.08);
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
       letter-spacing: 1px;
+      margin-bottom: 5px;
     }
 
-    button:hover {
-      background: rgba(54,217,255,.22);
-      box-shadow: 0 0 22px rgba(54,217,255,.22);
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
     }
 
-    textarea {
-      width: 100%;
-      min-height: 260px;
-      background: rgba(0,0,0,.35);
-      color: var(--green);
-      border: 1px solid var(--border);
+    .metric {
+      font-size: 26px;
+      font-weight: 900;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .resources {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .resource {
+      padding: 12px;
       border-radius: 14px;
-      padding: 14px;
-      resize: vertical;
-      font-family: Consolas, monospace;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.08);
     }
 
-    .radar {
-      height: 280px;
-      border-radius: 50%;
-      border: 1px solid rgba(54,217,255,.32);
-      background:
-        radial-gradient(circle, transparent 0 22%, rgba(54,217,255,.08) 23% 24%, transparent 25% 46%, rgba(54,217,255,.08) 47% 48%, transparent 49%),
-        conic-gradient(from 90deg, rgba(61,255,155,.28), transparent 18%, transparent);
-      box-shadow: inset 0 0 50px rgba(54,217,255,.12), 0 0 45px rgba(54,217,255,.10);
-      position: relative;
-      margin: 10px auto 20px;
-      max-width: 280px;
+    .res-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
     }
 
-    .radar::after {
-      content: "";
-      position: absolute;
-      inset: 50%;
-      width: 7px;
-      height: 7px;
-      background: var(--green);
-      border-radius: 50%;
-      box-shadow: 0 0 18px var(--green);
+    .res-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: 13px;
     }
 
-    @media (max-width: 1000px) {
-      .grid, .cards, .resource-grid { grid-template-columns: 1fr; }
-      .topbar { flex-direction: column; align-items: flex-start; }
+    .resicon {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 30% 30%, rgba(54,217,255,.28), rgba(0,0,0,.25));
+      border: 1px solid rgba(54,217,255,.30);
+      box-shadow: 0 0 14px rgba(54,217,255,.16);
+    }
+
+    .critical { color: var(--red); }
+    .low { color: var(--amber); }
+    .stable { color: var(--green); }
+
+    .front {
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: 10px 0;
+    }
+
+    .front:last-child { border-bottom: 0; }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--cyan);
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .advisor {
+      width: 100%;
+      min-height: 360px;
+      color: var(--green);
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .snapshot {
+      font-size: 12px;
+      border-left: 3px solid var(--cyan);
+      background: rgba(54,217,255,.06);
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+    }
+
+    @media (max-width: 1200px) {
+      .layout { grid-template-columns: 1fr; }
+      .cards, .resources, .grid2, .grid3 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="shell">
     <div class="topbar">
-      <div class="brand">
-        <span>Tactical Operations Interface</span>
+      <div>
         <h1>CON War Room</h1>
+        <div class="subtitle">Multi-game tactical command center</div>
       </div>
-      <div class="status-pill" id="apiStatus">API: checking...</div>
+      <div class="pill" id="status">API: checking...</div>
     </div>
 
-    <div class="input-row">
-      <input id="apiBase" value="http://localhost:8000" />
-      <button onclick="loadData()">Sync API</button>
-      <button onclick="copyAdvisor()">Copy Advisor Export</button>
-    </div>
+    <div class="layout">
+      <aside class="panel">
+        <h2>Partidas</h2>
+        <div class="game-list" id="gameList"></div>
+        <div class="row">
+          <button onclick="createGame()">Nueva partida</button>
+          <button class="danger" onclick="deleteGame()">Borrar</button>
+        </div>
+      </aside>
 
-    <div class="cards">
-      <div class="card"><h3>Partida</h3><div class="metric" id="game">---</div><div class="sub" id="country">---</div></div>
-      <div class="card"><h3>Día</h3><div class="metric" id="day">---</div><div class="sub">Operational cycle</div></div>
-      <div class="card"><h3>Victory Points</h3><div class="metric" id="vp">---</div><div class="sub">Progress tracker</div></div>
-      <div class="card"><h3>Coalición</h3><div class="metric" id="coalitionCount">---</div><div class="sub" id="coalition">---</div></div>
-    </div>
+      <main>
+        <div class="cards">
+          <div class="card"><h3>Partida</h3><div class="metric" id="mName">---</div><div class="sub" id="mCountry">---</div></div>
+          <div class="card"><h3>Día</h3><div class="metric" id="mDay">---</div><div class="sub">Ciclo operativo</div></div>
+          <div class="card"><h3>VP</h3><div class="metric" id="mVP">---</div><div class="sub">Victory Points</div></div>
+          <div class="card"><h3>Snapshots</h3><div class="metric" id="mSnapshots">0</div><div class="sub">Histórico local</div></div>
+        </div>
 
-    <div class="grid">
-      <div>
-        <div class="panel">
+        <section class="panel">
+          <h2>Ficha de partida</h2>
+          <div class="grid3">
+            <div class="field"><label>Nombre</label><input id="name" oninput="updateField('name', this.value)" /></div>
+            <div class="field"><label>País</label><input id="country" oninput="updateField('country', this.value)" /></div>
+            <div class="field"><label>Día</label><input id="day" type="number" oninput="updateField('day', Number(this.value))" /></div>
+          </div>
+          <div class="grid2" style="margin-top:10px;">
+            <div class="field"><label>VP</label><input id="vp" oninput="updateField('victory_points', this.value)" /></div>
+            <div class="field"><label>Coalición separada por comas</label><input id="coalition" oninput="updateCoalition(this.value)" /></div>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-top:16px;">
           <h2>Economy Radar</h2>
-          <div class="resource-grid" id="resources"></div>
-        </div>
+          <div class="resources" id="resources"></div>
+          <div class="row">
+            <button onclick="saveSnapshot()">Guardar snapshot</button>
+            <button onclick="loadSelected()">Recargar</button>
+          </div>
+        </section>
 
-        <div class="panel" style="margin-top:18px;">
-          <h2>War Fronts</h2>
-          <div id="fronts"></div>
-        </div>
-      </div>
+        <section class="panel" style="margin-top:16px;">
+          <h2>Frentes / Investigación / Notas</h2>
+          <div class="grid2">
+            <div class="field">
+              <label>Frentes JSON</label>
+              <textarea id="frontsJson" oninput="updateFronts(this.value)"></textarea>
+            </div>
+            <div class="field">
+              <label>Research separado por comas</label>
+              <textarea id="research" oninput="updateResearch(this.value)"></textarea>
+            </div>
+          </div>
+          <div class="field" style="margin-top:10px;">
+            <label>Notas</label>
+            <textarea id="notes" oninput="updateField('notes', this.value)"></textarea>
+          </div>
+        </section>
+      </main>
 
-      <div>
-        <div class="panel">
-          <h2>Threat Radar</h2>
-          <div class="radar"></div>
-          <div id="alerts"></div>
-        </div>
+      <aside>
+        <section class="panel">
+          <h2>Advisor</h2>
+          <textarea class="advisor" id="advisorText">Selecciona una partida y pulsa Ask Advisor.</textarea>
+          <div class="row">
+            <button onclick="askAdvisor()">Ask Advisor</button>
+            <button onclick="copyAdvisor()">Copiar export</button>
+          </div>
+        </section>
 
-        <div class="panel" style="margin-top:18px;">
-          <h2>Advisor Export</h2>
-          <textarea id="advisorExport">Sync API para generar export...</textarea>
-        </div>
-      </div>
+        <section class="panel" style="margin-top:16px;">
+          <h2>Frentes activos</h2>
+          <div id="frontList"></div>
+        </section>
+
+        <section class="panel" style="margin-top:16px;">
+          <h2>Snapshots</h2>
+          <div id="snapshots"></div>
+        </section>
+      </aside>
     </div>
   </div>
 
-  <script>
-    let lastExport = "";
+<script>
+const API_BASE = "http://127.0.0.1:8000";
+const STORAGE_KEY = "con-war-room-games-v05";
+let selectedId = null;
 
-    async function getJson(path) {
-      const base = document.getElementById("apiBase").value.replace(/\/$/, "");
-      const res = await fetch(base + path);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return await res.json();
-    }
+const resourceMeta = {
+  supplies: {label: "Supplies", icon: "📦"},
+  components: {label: "Components", icon: "⚙️"},
+  fuel: {label: "Fuel", icon: "⛽"},
+  electronics: {label: "Electronics", icon: "🔌"},
+  rares: {label: "Rares", icon: "💎"},
+  manpower: {label: "Manpower", icon: "🪖"},
+  money: {label: "Money", icon: "💵"}
+};
 
-    function cls(status) {
-      if (status === "critical") return "critical";
-      if (status === "low") return "low";
-      return "stable";
-    }
+function seedGames() {
+  return [
+    baseGame("colombia-main", "Colombia Principal", "Colombia"),
+    baseGame("slot-2", "Partida 2", "Pendiente"),
+    baseGame("slot-3", "Partida 3", "Pendiente"),
+    baseGame("slot-4", "Partida 4", "Pendiente")
+  ];
+}
 
-    async function loadData() {
-      try {
-        const health = await getJson("/health");
-        document.getElementById("apiStatus").textContent = "API: " + health.status.toUpperCase();
-        document.getElementById("apiStatus").style.color = "var(--green)";
+function baseGame(id, name, country) {
+  return {
+    id, name, country,
+    day: 1,
+    victory_points: "0 / 5920",
+    coalition: [],
+    resources: {
+      supplies: {value: 0, hour: 0, status: "stable"},
+      components: {value: 0, hour: 0, status: "stable"},
+      fuel: {value: 0, hour: 0, status: "critical"},
+      electronics: {value: 0, hour: 0, status: "low"},
+      rares: {value: 0, hour: 0, status: "critical"},
+      manpower: {value: 0, hour: 0, status: "stable"},
+      money: {value: 0, hour: 0, status: "stable"}
+    },
+    fronts: [
+      {name: "Frente 1", state: "pendiente", risk: "medium", action: "actualizar"}
+    ],
+    research: [],
+    notes: "",
+    snapshots: [],
+    updated_at: new Date().toISOString()
+  };
+}
 
-        const data = await getJson("/api/game/demo");
-        document.getElementById("game").textContent = data.game.replace("World War 3 - ", "");
-        document.getElementById("country").textContent = data.country;
-        document.getElementById("day").textContent = data.day;
-        document.getElementById("vp").textContent = data.victory_points;
-        document.getElementById("coalitionCount").textContent = data.coalition.length;
-        document.getElementById("coalition").textContent = data.coalition.join(" / ");
+function getGames() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    const seeded = seedGames();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+    selectedId = seeded[0].id;
+    return seeded;
+  }
+  return JSON.parse(raw);
+}
 
-        const resources = document.getElementById("resources");
-        resources.innerHTML = "";
-        Object.entries(data.resources).forEach(([name, r]) => {
-          resources.innerHTML += `
-            <div class="resource">
-              <div>
-                <strong>${name.toUpperCase()}</strong>
-                <span class="${cls(r.status)}">${r.status}</span>
-              </div>
-              <div>
-                <div class="value">${r.value}</div>
-                <div class="sub">+${r.hour}/h</div>
-              </div>
-            </div>`;
-        });
+function saveGames(games) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
+}
 
-        const fronts = document.getElementById("fronts");
-        fronts.innerHTML = "";
-        data.fronts.forEach(f => {
-          fronts.innerHTML += `
-            <div class="front">
-              <div><strong>${f.name}</strong><div class="sub">${f.state} — ${f.action}</div></div>
-              <div class="tag">${f.risk}</div>
-            </div>`;
-        });
+function selectedGame() {
+  const games = getGames();
+  if (!selectedId) selectedId = games[0]?.id;
+  return games.find(g => g.id === selectedId) || games[0];
+}
 
-        const alerts = document.getElementById("alerts");
-        alerts.innerHTML = "";
-        data.alerts.forEach(a => alerts.innerHTML += `<div class="alert">${a}</div>`);
+function replaceSelected(game) {
+  const games = getGames();
+  const idx = games.findIndex(g => g.id === game.id);
+  game.updated_at = new Date().toISOString();
+  if (idx >= 0) games[idx] = game;
+  saveGames(games);
+  render();
+}
 
-        const exportData = await getJson("/api/advisor/export");
-        lastExport = exportData.export;
-        document.getElementById("advisorExport").value = lastExport;
-      } catch (e) {
-        document.getElementById("apiStatus").textContent = "API: OFFLINE";
-        document.getElementById("apiStatus").style.color = "var(--red)";
-        document.getElementById("advisorExport").value = "Error conectando con API: " + e.message;
-      }
-    }
+function statusClass(s) {
+  if (s === "critical") return "critical";
+  if (s === "low") return "low";
+  return "stable";
+}
 
-    async function copyAdvisor() {
-      const text = document.getElementById("advisorExport").value;
-      await navigator.clipboard.writeText(text);
-      alert("Advisor Export copiado.");
-    }
+async function checkApi() {
+  try {
+    const res = await fetch(API_BASE + "/health");
+    const data = await res.json();
+    document.getElementById("status").textContent = "API: " + data.status.toUpperCase();
+  } catch {
+    document.getElementById("status").textContent = "API: OFFLINE";
+    document.getElementById("status").style.color = "var(--red)";
+  }
+}
 
-    loadData();
-  </script>
+function renderGameList() {
+  const games = getGames();
+  const box = document.getElementById("gameList");
+  box.innerHTML = "";
+  games.forEach(g => {
+    const btn = document.createElement("button");
+    btn.className = "game-btn" + (g.id === selectedId ? " active" : "");
+    btn.innerHTML = `<strong>${g.name}</strong><span>${g.country} · Día ${g.day} · ${g.victory_points}</span>`;
+    btn.onclick = () => { selectedId = g.id; render(); };
+    box.appendChild(btn);
+  });
+}
+
+function renderMetrics(g) {
+  document.getElementById("mName").textContent = g.name;
+  document.getElementById("mCountry").textContent = g.country;
+  document.getElementById("mDay").textContent = g.day;
+  document.getElementById("mVP").textContent = g.victory_points;
+  document.getElementById("mSnapshots").textContent = g.snapshots?.length || 0;
+
+  document.getElementById("name").value = g.name;
+  document.getElementById("country").value = g.country;
+  document.getElementById("day").value = g.day;
+  document.getElementById("vp").value = g.victory_points;
+  document.getElementById("coalition").value = (g.coalition || []).join(", ");
+  document.getElementById("frontsJson").value = JSON.stringify(g.fronts || [], null, 2);
+  document.getElementById("research").value = (g.research || []).join(", ");
+  document.getElementById("notes").value = g.notes || "";
+}
+
+function renderResources(g) {
+  const box = document.getElementById("resources");
+  box.innerHTML = "";
+
+  Object.entries(resourceMeta).forEach(([key, meta]) => {
+    const r = g.resources[key] || {value: 0, hour: 0, status: "stable"};
+    const div = document.createElement("div");
+    div.className = "resource";
+    div.innerHTML = `
+      <div class="res-head">
+        <div class="res-name"><span class="resicon">${meta.icon}</span>${meta.label}</div>
+        <span class="${statusClass(r.status)}">${r.status}</span>
+      </div>
+      <div class="grid3">
+        <div class="field"><label>Stock</label><input type="number" value="${r.value}" onchange="updateResource('${key}','value',Number(this.value))"></div>
+        <div class="field"><label>Hora</label><input type="number" value="${r.hour}" onchange="updateResource('${key}','hour',Number(this.value))"></div>
+        <div class="field"><label>Status</label>
+          <select onchange="updateResource('${key}','status',this.value)">
+            <option ${r.status === "stable" ? "selected" : ""}>stable</option>
+            <option ${r.status === "low" ? "selected" : ""}>low</option>
+            <option ${r.status === "critical" ? "selected" : ""}>critical</option>
+          </select>
+        </div>
+      </div>
+    `;
+    box.appendChild(div);
+  });
+}
+
+function renderFronts(g) {
+  const box = document.getElementById("frontList");
+  box.innerHTML = "";
+  (g.fronts || []).forEach(f => {
+    const div = document.createElement("div");
+    div.className = "front";
+    div.innerHTML = `<strong>${f.name}</strong><div class="sub">${f.state} — ${f.action}</div><span class="tag">${f.risk}</span>`;
+    box.appendChild(div);
+  });
+}
+
+function renderSnapshots(g) {
+  const box = document.getElementById("snapshots");
+  box.innerHTML = "";
+  (g.snapshots || []).slice().reverse().slice(0, 8).forEach(s => {
+    const div = document.createElement("div");
+    div.className = "snapshot";
+    div.innerHTML = `<strong>${new Date(s.time).toLocaleString()}</strong><br>Día ${s.day} · VP ${s.victory_points}<br>Fuel ${s.resources?.fuel?.value ?? 0} · Raros ${s.resources?.rares?.value ?? 0}`;
+    box.appendChild(div);
+  });
+}
+
+function render() {
+  const games = getGames();
+  if (!selectedId) selectedId = games[0].id;
+  const g = selectedGame();
+  renderGameList();
+  renderMetrics(g);
+  renderResources(g);
+  renderFronts(g);
+  renderSnapshots(g);
+}
+
+function updateField(field, value) {
+  const g = selectedGame();
+  g[field] = value;
+  replaceSelected(g);
+}
+
+function updateCoalition(value) {
+  const g = selectedGame();
+  g.coalition = value.split(",").map(x => x.trim()).filter(Boolean);
+  replaceSelected(g);
+}
+
+function updateResearch(value) {
+  const g = selectedGame();
+  g.research = value.split(",").map(x => x.trim()).filter(Boolean);
+  replaceSelected(g);
+}
+
+function updateFronts(value) {
+  const g = selectedGame();
+  try {
+    g.fronts = JSON.parse(value);
+    replaceSelected(g);
+  } catch {
+    // no render until valid JSON
+  }
+}
+
+function updateResource(key, prop, value) {
+  const g = selectedGame();
+  if (!g.resources[key]) g.resources[key] = {};
+  g.resources[key][prop] = value;
+  replaceSelected(g);
+}
+
+function createGame() {
+  const games = getGames();
+  const id = "game-" + Date.now();
+  const g = baseGame(id, "Nueva partida", "Pais");
+  games.push(g);
+  selectedId = id;
+  saveGames(games);
+  render();
+}
+
+function deleteGame() {
+  let games = getGames();
+  if (games.length <= 1) return alert("Debe quedar al menos una partida.");
+  const g = selectedGame();
+  if (!confirm("Borrar partida: " + g.name + "?")) return;
+  games = games.filter(x => x.id !== g.id);
+  selectedId = games[0].id;
+  saveGames(games);
+  render();
+}
+
+function saveSnapshot() {
+  const g = selectedGame();
+  const snapshot = {
+    time: new Date().toISOString(),
+    day: g.day,
+    victory_points: g.victory_points,
+    resources: JSON.parse(JSON.stringify(g.resources)),
+    fronts: JSON.parse(JSON.stringify(g.fronts || [])),
+    research: JSON.parse(JSON.stringify(g.research || []))
+  };
+  g.snapshots = g.snapshots || [];
+  g.snapshots.push(snapshot);
+  replaceSelected(g);
+}
+
+function loadSelected() {
+  render();
+}
+
+async function askAdvisor() {
+  const g = selectedGame();
+  const body = {
+    game_state: g,
+    question: "Analiza esta partida seleccionada y dime que hacer en las proximas 6-12 horas. Prioriza economia, investigacion, expansion, defensa y uso de elites."
+  };
+
+  try {
+    const res = await fetch(API_BASE + "/api/advisor/analyze", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    document.getElementById("advisorText").value = data.answer || JSON.stringify(data, null, 2);
+  } catch (e) {
+    document.getElementById("advisorText").value = "Error llamando Advisor: " + e.message;
+  }
+}
+
+async function copyAdvisor() {
+  const text = document.getElementById("advisorText").value;
+  await navigator.clipboard.writeText(text);
+  alert("Copiado.");
+}
+
+checkApi();
+render();
+</script>
 </body>
 </html>
