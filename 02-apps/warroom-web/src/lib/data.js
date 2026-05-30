@@ -1,11 +1,11 @@
 export const RESOURCE_META = {
-  supplies: { label: "Supplies", icon: "ðŸ“¦", target: 5000 },
-  components: { label: "Components", icon: "âš™ï¸", target: 4500 },
-  fuel: { label: "Fuel", icon: "â›½", target: 3500 },
-  electronics: { label: "Electronics", icon: "ðŸ”Œ", target: 2500 },
-  rares: { label: "Rares", icon: "ðŸ’Ž", target: 1800 },
-  manpower: { label: "Manpower", icon: "ðŸª–", target: 3000 },
-  money: { label: "Money", icon: "ðŸ’µ", target: 20000 }
+  supplies: { label: "Supplies", short: "SUP", target: 5000 },
+  components: { label: "Components", short: "CMP", target: 4500 },
+  fuel: { label: "Fuel", short: "FUL", target: 3500 },
+  electronics: { label: "Electronics", short: "ELC", target: 2500 },
+  rares: { label: "Rares", short: "RAR", target: 1800 },
+  manpower: { label: "Manpower", short: "MAN", target: 3000 },
+  money: { label: "Money", short: "MON", target: 20000 }
 };
 
 export const STORAGE_KEY = "con-war-room-games-v08";
