@@ -49,17 +49,17 @@ export function baseGame(id, name, country) {
 
 export function seedGames() {
   const g = baseGame("colombia-main", "Colombia Principal", "Colombia");
-  g.day = 2;
-  g.victory_points = "432 / 5920";
+  g.day = 6;
+  g.victory_points = "550 / 5920";
   g.coalition = ["Venezuela", "USA", "Canada", "Bolivia"];
   g.resources = {
-    supplies: { value: 7079, hour: 91, status: "stable" },
-    components: { value: 5474, hour: 45, status: "stable" },
-    fuel: { value: 345, hour: 50, status: "critical" },
-    electronics: { value: 719, hour: 49, status: "low" },
-    rares: { value: 84, hour: 34, status: "critical" },
-    manpower: { value: 3557, hour: 48, status: "stable" },
-    money: { value: 32968, hour: 382, status: "stable" }
+    supplies: { value: 1857, hour: 119, status: "low" },
+    components: { value: 2704, hour: 69, status: "stable" },
+    fuel: { value: 928, hour: 64, status: "low" },
+    electronics: { value: 481, hour: 60, status: "critical" },
+    rares: { value: 217, hour: 43, status: "critical" },
+    manpower: { value: 1206, hour: 49, status: "low" },
+    money: { value: 13764, hour: 485, status: "low" }
   };
   g.fronts = [
     { name: "Panama", state: "ocupado", risk: "medium", action: "mantener guarnicion" },

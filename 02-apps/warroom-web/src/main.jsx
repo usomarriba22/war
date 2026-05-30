@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Activity, Bot, Crosshair, Eye, Gamepad2, Map, Radar, Save, ShieldAlert, Swords, Target, Video, Zap } from "lucide-react";
+import { Activity, Bot, Crosshair, Eye, Gamepad2, Radar, Save, ShieldAlert, Target, Video, Zap } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { API_BASE, RESOURCE_KEYS, RESOURCE_META, STORAGE_KEY, baseGame, deriveStatus, normalizeGame, readinessScore, seedGames } from "./lib/data";
 import "./styles.css";
@@ -30,6 +30,13 @@ function applyLiveTick(game) {
   });
   return { ...game, resources, live_base_at: nowIso() };
 }
+function parseNumbers(text) {
+  return (text || "")
+    .replace(/[^\d,+.\s-]/g, " ")
+    .split(/[\s,\/|]+/)
+    .map(x => Number(String(x).replace(/[^\d.-]/g, "")))
+    .filter(n => Number.isFinite(n));
+}
 function snapshot(game) {
   return { time: nowIso(), day: game.day, victory_points: game.victory_points, resources: JSON.parse(JSON.stringify(game.resources)), readiness: readinessScore(game) };
 }
@@ -37,10 +44,51 @@ function criticalEta(game) {
   const entry = Object.entries(game.resources || {}).find(([, r]) => r.status === "critical" || r.status === "low");
   return entry ? `${RESOURCE_META[entry[0]]?.label || entry[0]} bajo` : "OK";
 }
-function parseOcrNumbers(text) {
-  const raw = (text || "").replace(/[Oo]/g, "0");
-  const nums = raw.match(/\d[\d.,]*/g) || [];
-  return nums.map(n => Number(n.replace(/[.,]/g, ""))).filter(n => Number.isFinite(n) && n >= 10);
+function localMovementPlan(game, marks = []) {
+  const res = game.resources || {};
+  const low = Object.entries(res).filter(([, r]) => ["critical", "low"].includes(r.status)).map(([k, r]) => `${k} ${r.status} (${Math.round(r.value || 0)} +${r.hour || 0}/h)`);
+  const highFronts = (game.fronts || []).filter(f => ["high", "critical"].includes(f.risk));
+  const stacks = game.stacks || [];
+  const enemies = game.enemy || [];
+
+  const lines = [];
+  lines.push("MOVEMENT ASSISTANT - PLAN LOCAL");
+  lines.push("");
+  lines.push("Prioridad ahora:");
+  if (highFronts.length) highFronts.forEach(f => lines.push(`- Frente ${f.name}: ${f.action}. Riesgo ${f.risk}.`));
+  else lines.push("- Sin frente high/critical. Mantener recon y economia.");
+
+  lines.push("");
+  lines.push("Mover:");
+  stacks.forEach(s => {
+    const risky = ["high", "critical"].includes(s.threat);
+    lines.push(`- ${s.name} (${s.location}): ${risky ? "NO avanzar solo; mover con apoyo/radar/AA" : "puede mantener o avanzar limitado"} | mision: ${s.mission} | condicion: ${s.condition}`);
+  });
+
+  lines.push("");
+  lines.push("No mover:");
+  if (res.fuel?.status !== "stable") lines.push("- No hacer desplazamientos navales/aereos largos: fuel bajo.");
+  if (res.rares?.status !== "stable") lines.push("- No encadenar elites/investigaciones caras: rares bajo.");
+  if (res.electronics?.status !== "stable") lines.push("- No depender de radar/SAM/satelite nuevo sin recuperar electronica.");
+  if (!low.length) lines.push("- Sin bloqueo economico critico detectado.");
+
+  lines.push("");
+  lines.push("Contramedidas:");
+  enemies.forEach(e => lines.push(`- ${e.location}: observado ${e.observed}. Counter: ${e.counter}.`));
+  if (!enemies.length) lines.push("- Sin enemigos cargados. Actualiza contactos.");
+
+  lines.push("");
+  lines.push("Marcas de captura:");
+  if (marks.length) marks.slice(0, 10).forEach((m, i) => lines.push(`- ${i + 1}. ${m.label} en x=${m.x.toFixed(1)}% y=${m.y.toFixed(1)}%`));
+  else lines.push("- Sin marcas. Marca objetivos/enemigos en Capture.");
+
+  lines.push("");
+  lines.push("Checklist antes de mover:");
+  lines.push("1. Revisar organizacion/vida del stack.");
+  lines.push("2. Confirmar radar/recon del objetivo.");
+  lines.push("3. No dejar ciudades recien tomadas sin guarnicion.");
+  lines.push("4. No abrir Peru si Ecuador/Panama no estan estables.");
+  return lines.join("\n");
 }
 
 function App() {
@@ -50,25 +98,21 @@ function App() {
   const [apiOk, setApiOk] = useState(false);
   const [live, setLive] = useState(true);
   const [clock, setClock] = useState(new Date());
-  const [advisor, setAdvisor] = useState("Pulsa Ask o Movement para generar recomendaciones.");
-  const [movementPlan, setMovementPlan] = useState("Movement Assistant listo. Carga stacks/enemigos y pulsa Recomendar movimiento.");
+  const [advisor, setAdvisor] = useState("Pulsa Ask o Movement.");
+  const [movementPlan, setMovementPlan] = useState("Movement listo. Actualiza stacks/enemigos o usa plan local.");
   const [captureStatus, setCaptureStatus] = useState("offline");
   const [captureOpen, setCaptureOpen] = useState(false);
   const [captureMode, setCaptureMode] = useState("fit");
+  const [captureSize, setCaptureSize] = useState("compact");
   const [marks, setMarks] = useState([]);
   const [markLabel, setMarkLabel] = useState("objetivo");
-  const [ocrText, setOcrText] = useState("");
-  const [ocrNumbers, setOcrNumbers] = useState([]);
-  const [segmentedOcr, setSegmentedOcr] = useState([]);
-  const [ocrEditable, setOcrEditable] = useState([]);
-  const [captureSize, setCaptureSize] = useState("compact");
-  const [ocrBusy, setOcrBusy] = useState(false);
-  const [ocrCrop, setOcrCrop] = useState({ x: 34, y: 0, w: 60, h: 12, threshold: 95, scale: 4 });
+  const [syncStock, setSyncStock] = useState("");
+  const [syncHour, setSyncHour] = useState("");
+  const [syncPreview, setSyncPreview] = useState("");
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const bigCanvasRef = useRef(null);
-  const cropCanvasRef = useRef(null);
   const streamRef = useRef(null);
   const drawTimerRef = useRef(null);
 
@@ -114,165 +158,61 @@ function App() {
   function saveSnapshot() {
     replaceSelected(addFeed({ ...selected, snapshots: [...(selected.snapshots || []), snapshot(selected)] }, "Snapshot guardado", "info"));
   }
+
+  function previewFastSync() {
+    const stock = parseNumbers(syncStock);
+    const hour = parseNumbers(syncHour);
+    const combo = stock.length >= 14 ? stock : [];
+    const stockVals = combo.length >= 14 ? combo.filter((_, i) => i % 2 === 0).slice(0, 7) : stock.slice(0, 7);
+    const hourVals = combo.length >= 14 ? combo.filter((_, i) => i % 2 === 1).slice(0, 7) : hour.slice(0, 7);
+    setSyncPreview(RESOURCE_KEYS.map((k, i) => `${RESOURCE_META[k].label}: ${stockVals[i] ?? "?"} / +${hourVals[i] ?? "?"}/h`).join("\n"));
+  }
+  function applyFastSync() {
+    const stock = parseNumbers(syncStock);
+    const hour = parseNumbers(syncHour);
+    const combo = stock.length >= 14 ? stock : [];
+    const stockVals = combo.length >= 14 ? combo.filter((_, i) => i % 2 === 0).slice(0, 7) : stock.slice(0, 7);
+    const hourVals = combo.length >= 14 ? combo.filter((_, i) => i % 2 === 1).slice(0, 7) : hour.slice(0, 7);
+    if (stockVals.length < 7) return alert("Pega 7 stocks o 14 numeros stock/hora.");
+    const resources = { ...selected.resources };
+    RESOURCE_KEYS.forEach((key, i) => {
+      const value = Number(stockVals[i]);
+      const h = Number(hourVals[i]);
+      resources[key] = {
+        ...resources[key],
+        value,
+        hour: Number.isFinite(h) ? h : resources[key].hour,
+        status: deriveStatus(key, value)
+      };
+    });
+    replaceSelected(addFeed({ ...selected, resources, live_base_at: nowIso() }, "Fast Sync aplicado", "info"));
+  }
+
   async function askGeneral() {
     try {
       const res = await fetch(`${API_BASE}/api/advisor/analyze`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game_state: selected, question: "Analiza la partida y da acciones proximas 6-12 horas." }) });
       const data = await res.json();
       setAdvisor(data.answer || JSON.stringify(data, null, 2));
-      replaceSelected(addFeed(selected, "Advisor generado", "info"));
-    } catch (e) { setAdvisor(`Error: ${e.message}`); }
+      replaceSelected(addFeed(selected, "Advisor API generado", "info"));
+    } catch (e) {
+      const text = localMovementPlan(selected, marks);
+      setAdvisor(text);
+    }
   }
   async function askMovement() {
+    const local = localMovementPlan(selected, marks);
+    setMovementPlan(local);
+    setAdvisor(local);
     try {
       const res = await fetch(`${API_BASE}/api/movement/analyze`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ game_state: selected, marks }) });
       const data = await res.json();
-      const text = data.plan || data.answer || JSON.stringify(data, null, 2);
+      const text = data.plan || data.answer || local;
       setMovementPlan(text);
       setAdvisor(text);
-      replaceSelected(addFeed(selected, "Movement plan generado", "info"));
-    } catch (e) { setMovementPlan(`Error: ${e.message}`); }
-  }
-  function applyOcrToResources() {
-    if (ocrNumbers.length < 7) return alert("OCR no detecto 7 numeros. Ajusta captura/zoom y prueba otra vez.");
-    const resources = { ...selected.resources };
-    RESOURCE_KEYS.forEach((key, i) => {
-      const value = ocrNumbers[i];
-      resources[key] = { ...resources[key], value, status: deriveStatus(key, value) };
-    });
-    replaceSelected(addFeed({ ...selected, resources, live_base_at: nowIso() }, "OCR aplicado a recursos", "info"));
-  }
-
-  async function runSegmentedOcr() {
-    const src = canvasRef.current;
-    if (!src) return;
-
-    setOcrBusy(true);
-    try {
-      const Tesseract = await import("tesseract.js");
-
-      const sx = Math.round(src.width * (ocrCrop.x / 100));
-      const sy = Math.round(src.height * (ocrCrop.y / 100));
-      const sw = Math.round(src.width * (ocrCrop.w / 100));
-      const sh = Math.round(src.height * (ocrCrop.h / 100));
-
-      const results = [];
-
-      for (let i = 0; i < RESOURCE_KEYS.length; i++) {
-        const key = RESOURCE_KEYS[i];
-        const meta = RESOURCE_META[key];
-
-        const segW = Math.round(sw / RESOURCE_KEYS.length);
-        const segX = sx + (i * segW);
-
-        // Dentro de cada recurso, ignoramos el icono de la izquierda y el margen.
-        // El texto suele estar en el 35%-98% de cada caja.
-        const textX = segX + Math.round(segW * 0.30);
-        const textW = Math.max(14, Math.round(segW * 0.68));
-
-        const scale = Number(ocrCrop.scale || 6);
-        const segCanvas = document.createElement("canvas");
-        segCanvas.width = Math.max(320, textW * scale);
-        segCanvas.height = Math.max(150, sh * scale);
-
-        const ctx = segCanvas.getContext("2d");
-        ctx.imageSmoothingEnabled = false;
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, segCanvas.width, segCanvas.height);
-        ctx.drawImage(src, textX, sy, textW, sh, 0, 0, segCanvas.width, segCanvas.height);
-
-        // Probar dos preprocesados: binario y original invertido simple.
-        const img = ctx.getImageData(0, 0, segCanvas.width, segCanvas.height);
-        const threshold = Number(ocrCrop.threshold || 110);
-
-        for (let p = 0; p < img.data.length; p += 4) {
-          const r = img.data[p];
-          const g = img.data[p + 1];
-          const b = img.data[p + 2];
-          const brightness = (r + g + b) / 3;
-          const greenBoost = g > r + 8 && g > b + 8 ? 50 : 0;
-          const whiteBoost = r > 150 && g > 150 && b > 150 ? 45 : 0;
-          const v = brightness + greenBoost + whiteBoost > threshold ? 255 : 0;
-          img.data[p] = v;
-          img.data[p + 1] = v;
-          img.data[p + 2] = v;
-        }
-        ctx.putImageData(img, 0, 0);
-
-        const ocr = await Tesseract.recognize(segCanvas, "eng", {
-          tessedit_char_whitelist: "0123456789,+/h ",
-          preserve_interword_spaces: "1"
-        });
-
-        const text = ocr?.data?.text || "";
-        const nums = parseOcrNumbers(text);
-
-        // Heuristica:
-        // stock suele ser el primer numero grande; hora suele ser el ultimo numero.
-        // Si OCR no pilla hora, queda editable.
-        const stock = nums.length ? nums[0] : null;
-        const hour = nums.length >= 2 ? nums[nums.length - 1] : null;
-
-        results.push({
-          key,
-          label: meta.label,
-          text,
-          nums,
-          stock,
-          hour
-        });
-      }
-
-      setSegmentedOcr(results);
-      setOcrEditable(results.map(r => ({
-        key: r.key,
-        label: r.label,
-        stock: r.stock ?? "",
-        hour: r.hour ?? "",
-        raw: (r.text || "").replace(/\s+/g, " ").trim()
-      })));
-
-      setOcrText(results.map(r => `${r.label}: ${r.text.replace(/\s+/g, " ").trim()} => ${r.nums.join(" / ")}`).join("\n"));
-      setOcrNumbers(results.map(r => r.stock).filter(n => n !== null));
-    } catch (e) {
-      setOcrText(`Segmented OCR error: ${e.message}`);
+      replaceSelected(addFeed(selected, "Movement API generado", "info"));
+    } catch {
+      replaceSelected(addFeed(selected, "Movement local generado", "info"));
     }
-    setOcrBusy(false);
-  }
-
-  function updateOcrEditable(key, field, value) {
-    setOcrEditable((old) => old.map((x) => x.key === key ? { ...x, [field]: value } : x));
-  }
-
-  function applySegmentedOcrToResources() {
-    const source = (ocrEditable && ocrEditable.length) ? ocrEditable : segmentedOcr;
-
-    if (!source || source.length < 7) {
-      return alert("Primero ejecuta OCR por cajas o rellena la tabla editable.");
-    }
-
-    const resources = { ...selected.resources };
-
-    source.forEach((item) => {
-      if (!item || !item.key) return;
-      const current = resources[item.key] || {};
-      const next = { ...current };
-
-      const stock = Number(item.stock);
-      const hour = Number(item.hour);
-
-      if (Number.isFinite(stock) && stock >= 0) {
-        next.value = stock;
-        next.status = deriveStatus(item.key, next.value);
-      }
-
-      if (Number.isFinite(hour)) {
-        next.hour = hour;
-      }
-
-      resources[item.key] = next;
-    });
-
-    replaceSelected(addFeed({ ...selected, resources, live_base_at: nowIso() }, "OCR validado aplicado a recursos", "info"));
   }
 
   async function startCapture() {
@@ -310,64 +250,6 @@ function App() {
     const rect = e.currentTarget.getBoundingClientRect();
     setMarks([...marks, { x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100, label: markLabel || "objetivo", time: nowIso() }]);
   }
-  async function runOcrTopBar() {
-    const src = canvasRef.current;
-    const crop = cropCanvasRef.current;
-    if (!src || !crop) return;
-
-    setOcrBusy(true);
-    try {
-      const ctx = crop.getContext("2d");
-
-      const sx = Math.round(src.width * (ocrCrop.x / 100));
-      const sy = Math.round(src.height * (ocrCrop.y / 100));
-      const sw = Math.round(src.width * (ocrCrop.w / 100));
-      const sh = Math.round(src.height * (ocrCrop.h / 100));
-
-      crop.width = Math.max(800, sw * Number(ocrCrop.scale || 4));
-      crop.height = Math.max(120, sh * Number(ocrCrop.scale || 4));
-
-      ctx.imageSmoothingEnabled = false;
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, crop.width, crop.height);
-      ctx.drawImage(src, sx, sy, sw, sh, 0, 0, crop.width, crop.height);
-
-      const img = ctx.getImageData(0, 0, crop.width, crop.height);
-      const threshold = Number(ocrCrop.threshold || 95);
-
-      for (let i = 0; i < img.data.length; i += 4) {
-        const r = img.data[i];
-        const g = img.data[i + 1];
-        const b = img.data[i + 2];
-
-        // Dar prioridad a texto blanco/verde claro sobre fondo oscuro.
-        const brightness = (r + g + b) / 3;
-        const greenBoost = g > r + 15 && g > b + 15 ? 35 : 0;
-        const v = brightness + greenBoost > threshold ? 255 : 0;
-
-        img.data[i] = v;
-        img.data[i + 1] = v;
-        img.data[i + 2] = v;
-      }
-
-      ctx.putImageData(img, 0, 0);
-
-      const Tesseract = await import("tesseract.js");
-      const result = await Tesseract.recognize(crop, "eng", {
-        tessedit_char_whitelist: "0123456789,+/h ",
-        preserve_interword_spaces: "1"
-      });
-
-      const text = result?.data?.text || "";
-      const numbers = parseOcrNumbers(text);
-
-      setOcrText(text);
-      setOcrNumbers(numbers);
-    } catch (e) {
-      setOcrText(`OCR error: ${e.message}`);
-    }
-    setOcrBusy(false);
-  }
 
   const chartData = (selected.snapshots || []).slice(-12).map((s, i) => ({ idx: i, fuel: s.resources?.fuel?.value || 0, rares: s.resources?.rares?.value || 0, electronics: s.resources?.electronics?.value || 0, components: s.resources?.components?.value || 0 }));
   const prodData = RESOURCE_KEYS.map(k => ({ name: RESOURCE_META[k].short, value: Number(selected.resources?.[k]?.hour || 0) }));
@@ -375,20 +257,21 @@ function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div><div className="eyebrow">CON War Room v0.9</div><h1>Live Tactical Command Center</h1></div>
+        <div><div className="eyebrow">CON War Room v0.9.4</div><h1>Live Tactical Command Center</h1></div>
         <div className="topActions"><span className={apiOk ? "pill good" : "pill danger"}>API {apiOk ? "ONLINE" : "OFFLINE"}</span><span className="pill">{clock.toLocaleTimeString()}</span><button className={live ? "good" : "warn"} onClick={() => setLive(!live)}><Zap size={16}/> {live ? "Live ON" : "Live OFF"}</button><button onClick={saveSnapshot}><Save size={16}/> Snapshot</button></div>
       </header>
 
       <aside className="sidebar">
         <Panel title="Partidas" right={games.length}>{games.map(g => <button key={g.id} className={`gameBtn ${g.id===selected.id ? "active" : ""}`} onClick={() => setSelectedId(g.id)}><strong>{g.name}</strong><span>{g.country} - Dia {g.day} - {readinessScore(g)}% ready</span></button>)}<div className="row"><button onClick={createGame}>Nueva</button><button className="danger" onClick={deleteGame}>Borrar</button></div></Panel>
-        <Panel title="Tabs"><nav className="tabNav">{[["command","Command"],["movement","Movement"],["capture","Capture"],["data","Data"]].map(([id,l]) => <button key={id} className={tab===id ? "active":""} onClick={() => setTab(id)}>{l}</button>)}</nav></Panel>
-        <Panel title="Live Engine"><p className="hint">Recursos por live tick + OCR top bar. Captura observa, no controla el juego.</p></Panel>
+        <Panel title="Tabs"><nav className="tabNav">{[["command","Command"],["movement","Movement"],["capture","Capture"],["sync","Sync"],["data","Data"]].map(([id,l]) => <button key={id} className={tab===id ? "active":""} onClick={() => setTab(id)}>{l}</button>)}</nav></Panel>
+        <Panel title="Live Engine"><p className="hint">OCR queda experimental. Para avanzar rapido usa Sync: pega los 7 valores y aplica.</p></Panel>
       </aside>
 
       <main className="main">
         {tab === "command" && <CommandTab selected={selected} patchSelected={patchSelected} updateResource={updateResource} chartData={chartData} prodData={prodData} />}
         {tab === "movement" && <MovementTab selected={selected} patchSelected={patchSelected} askMovement={askMovement} movementPlan={movementPlan} />}
-        {tab === "capture" && <CaptureTab videoRef={videoRef} canvasRef={canvasRef} bigCanvasRef={bigCanvasRef} cropCanvasRef={cropCanvasRef} captureOpen={captureOpen} setCaptureOpen={setCaptureOpen} captureStatus={captureStatus} captureMode={captureMode} setCaptureMode={setCaptureMode} startCapture={startCapture} stopCapture={stopCapture} addMark={addMark} marks={marks} setMarks={setMarks} markLabel={markLabel} setMarkLabel={setMarkLabel} runOcrTopBar={runOcrTopBar} ocrBusy={ocrBusy} ocrText={ocrText} ocrNumbers={ocrNumbers} applyOcrToResources={applyOcrToResources} ocrCrop={ocrCrop} setOcrCrop={setOcrCrop} segmentedOcr={segmentedOcr} ocrEditable={ocrEditable} updateOcrEditable={updateOcrEditable} runSegmentedOcr={runSegmentedOcr} applySegmentedOcrToResources={applySegmentedOcrToResources} captureSize={captureSize} setCaptureSize={setCaptureSize} />}
+        {tab === "capture" && <CaptureTab videoRef={videoRef} canvasRef={canvasRef} bigCanvasRef={bigCanvasRef} captureOpen={captureOpen} setCaptureOpen={setCaptureOpen} captureStatus={captureStatus} captureMode={captureMode} setCaptureMode={setCaptureMode} captureSize={captureSize} setCaptureSize={setCaptureSize} startCapture={startCapture} stopCapture={stopCapture} addMark={addMark} marks={marks} setMarks={setMarks} markLabel={markLabel} setMarkLabel={setMarkLabel} />}
+        {tab === "sync" && <SyncTab selected={selected} syncStock={syncStock} setSyncStock={setSyncStock} syncHour={syncHour} setSyncHour={setSyncHour} syncPreview={syncPreview} previewFastSync={previewFastSync} applyFastSync={applyFastSync} />}
         {tab === "data" && <DataTab selected={selected} patchSelected={patchSelected} games={games} persist={persist} />}
       </main>
 
@@ -415,45 +298,19 @@ function Resource({ kName, r, onChange }) {
   const meta = RESOURCE_META[kName];
   return <div className={`resourceCard ${r.status}`}><div className="resourceTop"><strong><img className="resImage" src={meta.img} alt={meta.label}/>{meta.label}</strong><em>{r.status}</em></div><div className="formGrid three"><label>Stock<input type="number" value={Math.round(Number(r.value||0))} onChange={e=>onChange("value",e.target.value)}/></label><label>Hora<input type="number" value={r.hour} onChange={e=>onChange("hour",e.target.value)}/></label><label>Status<select value={r.status} onChange={e=>onChange("status",e.target.value)}><option>stable</option><option>low</option><option>critical</option></select></label></div><div className="bar"><i style={{width:`${Math.max(4,Math.min(100,Number(r.value||0)/meta.target*100))}%`}}/></div><p className="hint">target tactico: {meta.target}</p></div>;
 }
+function SyncTab({ selected, syncStock, setSyncStock, syncHour, setSyncHour, syncPreview, previewFastSync, applyFastSync }) {
+  return <section className="syncGrid"><Panel title="Fast Resource Sync"><p className="hint">Pega los recursos de izquierda a derecha. Formato rapido: 7 stocks y 7 producciones. Tambien acepta 14 numeros intercalados: stock hora stock hora...</p><div className="formGrid two"><label>Stocks<textarea value={syncStock} onChange={e=>setSyncStock(e.target.value)} placeholder="1857 2704 928 481 217 1206 13764"/></label><label>Produccion / hora<textarea value={syncHour} onChange={e=>setSyncHour(e.target.value)} placeholder="119 69 64 60 43 49 485"/></label></div><div className="row"><button onClick={previewFastSync}>Preview</button><button onClick={applyFastSync}>Aplicar Sync</button></div><textarea className="advisor small" value={syncPreview} readOnly/></Panel><Panel title="Orden actual">{RESOURCE_KEYS.map(k => <div className="syncResource" key={k}><img src={RESOURCE_META[k].img}/><strong>{RESOURCE_META[k].label}</strong><span>{Math.round(selected.resources[k]?.value || 0)}</span><em>+{selected.resources[k]?.hour || 0}/h</em></div>)}</Panel></section>;
+}
 function MovementTab({ selected, patchSelected, askMovement, movementPlan }) {
   const [stacks, setStacks] = useState(JSON.stringify(selected.stacks||[], null, 2));
   const [enemy, setEnemy] = useState(JSON.stringify(selected.enemy||[], null, 2));
   useEffect(()=>{setStacks(JSON.stringify(selected.stacks||[], null, 2)); setEnemy(JSON.stringify(selected.enemy||[], null, 2));}, [selected.id]);
   function save(){ patchSelected({ stacks: JSON.parse(stacks), enemy: JSON.parse(enemy) }); }
-  return <section className="movementGrid"><Panel title="Movement Assistant"><p className="hint">No ejecuta acciones. Recomienda movimientos, contramedidas y que NO mover.</p><div className="formGrid two"><label>Stacks propios JSON<textarea value={stacks} onChange={e=>setStacks(e.target.value)}/></label><label>Enemigos observados JSON<textarea value={enemy} onChange={e=>setEnemy(e.target.value)}/></label></div><div className="row"><button onClick={save}><Save size={16}/> Guardar</button><button onClick={askMovement}><Target size={16}/> Recomendar movimiento</button></div></Panel><Panel title="Plan de movimiento"><textarea className="advisor" value={movementPlan} readOnly/></Panel><section className="moveCols"><Panel title="Stacks propios">{(selected.stacks||[]).map((s,i)=><MoveCard key={i} item={s}/>)}</Panel><Panel title="Contramedidas">{(selected.enemy||[]).map((e,i)=><MoveCard key={i} item={e}/>)}</Panel></section></section>;
+  return <section className="movementGrid"><Panel title="Movement Assistant"><p className="hint">No ejecuta acciones. Recomienda movimientos, contramedidas y que NO mover. Funciona local aunque la API este offline.</p><div className="formGrid two"><label>Stacks propios JSON<textarea value={stacks} onChange={e=>setStacks(e.target.value)}/></label><label>Enemigos observados JSON<textarea value={enemy} onChange={e=>setEnemy(e.target.value)}/></label></div><div className="row"><button onClick={save}><Save size={16}/> Guardar</button><button onClick={askMovement}><Target size={16}/> Recomendar movimiento</button></div></Panel><Panel title="Plan de movimiento"><textarea className="advisor" value={movementPlan} readOnly/></Panel><section className="moveCols"><Panel title="Stacks propios">{(selected.stacks||[]).map((s,i)=><MoveCard key={i} item={s}/>)}</Panel><Panel title="Contramedidas">{(selected.enemy||[]).map((e,i)=><MoveCard key={i} item={e}/>)}</Panel></section></section>;
 }
 function MoveCard({ item }) { return <div className="moveCard"><strong>{item.name || item.location}</strong>{Object.entries(item).map(([k,v])=><p key={k}><b>{k}:</b> {String(v)}</p>)}</div>; }
-function CaptureTab({ videoRef, canvasRef, bigCanvasRef, cropCanvasRef, captureOpen, setCaptureOpen, captureStatus, captureMode, setCaptureMode, startCapture, stopCapture, addMark, marks, setMarks, markLabel, setMarkLabel, runOcrTopBar, ocrBusy, ocrText, ocrNumbers, applyOcrToResources, ocrCrop, setOcrCrop, segmentedOcr, ocrEditable, updateOcrEditable, runSegmentedOcr, applySegmentedOcrToResources, captureSize, setCaptureSize }) {
-  return <section className="capturePage"><Panel title="Capture Center + OCR" right={captureStatus}><video ref={videoRef} className="hiddenVideo"/><div className={`captureStage ${captureSize}`} onPointerDown={addMark}><canvas ref={canvasRef} width="1280" height="720" className="captureCanvas"/><div className="ocrBoxOverlay" style={{ left: `${ocrCrop.x}%`, top: `${ocrCrop.y}%`, width: `${ocrCrop.w}%`, height: `${ocrCrop.h}%` }}><span>OCR TOP BAR</span></div>{marks.map((m,i)=><div className="captureMark" key={i} style={{left:`${m.x}%`,top:`${m.y}%`}}><span>{i+1}</span><em>{m.label}</em></div>)}</div><div className="row"><input className="markInput" value={markLabel} onChange={e=>setMarkLabel(e.target.value)} placeholder="texto del marcador"/><button onClick={startCapture}><Video size={16}/> Conectar pantalla</button><button onClick={()=>setCaptureOpen(true)}><Eye size={16}/> Ampliar</button><button onClick={()=>setCaptureSize(captureSize==="compact"?"large":"compact")}>Tamano {captureSize}</button><button onClick={()=>setCaptureMode(captureMode==="fit"?"fill":"fit")}>Modo {captureMode}</button><button onClick={()=>setMarks([])}>Limpiar marcas</button><button className="danger" onClick={stopCapture}>Parar</button></div><p className="hint">Click sobre la captura crea marcador tactico. Captura observa, no controla el juego.</p></Panel><Panel title="OCR Top Bar Calibrator">
-  <div className="ocrControls">
-    <label>X %<input type="range" min="0" max="100" value={ocrCrop.x} onChange={e=>setOcrCrop({...ocrCrop, x:Number(e.target.value)})}/><b>{ocrCrop.x}</b></label>
-    <label>Y %<input type="range" min="0" max="50" value={ocrCrop.y} onChange={e=>setOcrCrop({...ocrCrop, y:Number(e.target.value)})}/><b>{ocrCrop.y}</b></label>
-    <label>W %<input type="range" min="10" max="100" value={ocrCrop.w} onChange={e=>setOcrCrop({...ocrCrop, w:Number(e.target.value)})}/><b>{ocrCrop.w}</b></label>
-    <label>H %<input type="range" min="4" max="35" value={ocrCrop.h} onChange={e=>setOcrCrop({...ocrCrop, h:Number(e.target.value)})}/><b>{ocrCrop.h}</b></label>
-    <label>Threshold<input type="range" min="40" max="220" value={ocrCrop.threshold} onChange={e=>setOcrCrop({...ocrCrop, threshold:Number(e.target.value)})}/><b>{ocrCrop.threshold}</b></label>
-    <label>Scale<input type="range" min="2" max="8" value={ocrCrop.scale} onChange={e=>setOcrCrop({...ocrCrop, scale:Number(e.target.value)})}/><b>{ocrCrop.scale}</b></label>
-  </div>
-  <div className="ocrPresets">
-    <button onClick={()=>setOcrCrop({ x: 34, y: 0, w: 60, h: 12, threshold: 95, scale: 4 })}>Preset top-center</button>
-    <button onClick={()=>setOcrCrop({ x: 0, y: 0, w: 100, h: 16, threshold: 95, scale: 4 })}>Preset full-top</button>
-    <button onClick={()=>setOcrCrop({ x: 38, y: 0, w: 58, h: 9, threshold: 120, scale: 5 })}>Preset recursos</button>
-  </div>
-  <canvas ref={cropCanvasRef} width="1600" height="190" className="ocrCrop"/>
-  <div className="row"><button onClick={runOcrTopBar} disabled={ocrBusy}>{ocrBusy ? "OCR..." : "Leer zona OCR"}</button><button onClick={runSegmentedOcr} disabled={ocrBusy}>{ocrBusy ? "OCR..." : "Leer por cajas"}</button><button onClick={applyOcrToResources}>Aplicar OCR simple</button><button onClick={applySegmentedOcrToResources}>Aplicar OCR por cajas</button></div>
-  <p className="hint">Numeros detectados: {ocrNumbers.join(" / ") || "sin datos"}</p>
-  <p className="hint">Tip: mueve X/Y/W/H hasta que el recorte muestre solo la barra de recursos, sin panel izquierdo ni mapa.</p>
-  <div className="segmentedOcrGrid editable">
-    {(ocrEditable || []).map((r) => (
-      <div className="segOcrCard" key={r.key}>
-        <strong>{r.label}</strong>
-        <label>Stock<input value={r.stock} onChange={(e)=>updateOcrEditable(r.key, "stock", e.target.value)} /></label>
-        <label>Hora<input value={r.hour} onChange={(e)=>updateOcrEditable(r.key, "hour", e.target.value)} /></label>
-        <small>{r.raw || "sin lectura"}</small>
-      </div>
-    ))}
-  </div>
-  <textarea className="ocrText" value={ocrText} onChange={e=>{}} readOnly/>
-</Panel>{captureOpen && <div className="captureModal"><div className="captureModalTop"><strong>LIVE GAME FEED</strong><div className="row"><button onClick={()=>setCaptureSize(captureSize==="compact"?"large":"compact")}>Tamano {captureSize}</button><button onClick={()=>setCaptureMode(captureMode==="fit"?"fill":"fit")}>Modo {captureMode}</button><button className="danger" onClick={()=>setCaptureOpen(false)}>Cerrar</button></div></div><div className="captureBigStage" onPointerDown={addMark}><canvas ref={bigCanvasRef} width="1920" height="1080" className="captureBig"/>{marks.map((m,i)=><div className="captureMark big" key={i} style={{left:`${m.x}%`,top:`${m.y}%`}}><span>{i+1}</span><em>{m.label}</em></div>)}</div></div>}</section>;
+function CaptureTab({ videoRef, canvasRef, bigCanvasRef, captureOpen, setCaptureOpen, captureStatus, captureMode, setCaptureMode, captureSize, setCaptureSize, startCapture, stopCapture, addMark, marks, setMarks, markLabel, setMarkLabel }) {
+  return <section className="capturePage"><Panel title="Capture Center" right={captureStatus}><video ref={videoRef} className="hiddenVideo"/><div className={`captureStage ${captureSize}`} onClick={addMark}><canvas ref={canvasRef} width="1280" height="720" className="captureCanvas"/>{marks.map((m,i)=><div className="captureMark" key={i} style={{left:`${m.x}%`,top:`${m.y}%`}}><span>{i+1}</span><em>{m.label}</em></div>)}</div><div className="row"><input className="markInput" value={markLabel} onChange={e=>setMarkLabel(e.target.value)} placeholder="texto del marcador"/><button onClick={startCapture}><Video size={16}/> Conectar pantalla</button><button onClick={()=>setCaptureOpen(true)}><Eye size={16}/> Ampliar</button><button onClick={()=>setCaptureSize(captureSize==="compact"?"large":"compact")}>Tamano {captureSize}</button><button onClick={()=>setCaptureMode(captureMode==="fit"?"fill":"fit")}>Modo {captureMode}</button><button onClick={()=>setMarks([])}>Limpiar marcas</button><button className="danger" onClick={stopCapture}>Parar</button></div><p className="hint">Click crea marcador tactico. Captura observa, no controla el juego.</p></Panel>{captureOpen && <div className="captureModal"><div className="captureModalTop"><strong>LIVE GAME FEED</strong><div className="row"><button onClick={()=>setCaptureMode(captureMode==="fit"?"fill":"fit")}>Modo {captureMode}</button><button className="danger" onClick={()=>setCaptureOpen(false)}>Cerrar</button></div></div><div className="captureBigStage" onClick={addMark}><canvas ref={bigCanvasRef} width="1920" height="1080" className="captureBig"/>{marks.map((m,i)=><div className="captureMark big" key={i} style={{left:`${m.x}%`,top:`${m.y}%`}}><span>{i+1}</span><em>{m.label}</em></div>)}</div></div>}</section>;
 }
 function DataTab({ selected, patchSelected, games, persist }) {
   const [fronts,setFronts]=useState(JSON.stringify(selected.fronts||[],null,2)); const [research,setResearch]=useState((selected.research||[]).join(", ")); const [notes,setNotes]=useState(selected.notes||""); const [io,setIo]=useState("");
