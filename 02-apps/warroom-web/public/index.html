@@ -166,6 +166,72 @@
   font-weight: 900;
 }
 </style>
+<style id="sleep-hotfix-v072-style">
+  .shell {
+    max-width: none !important;
+    width: 100% !important;
+    padding: 18px 24px !important;
+  }
+
+  .layout {
+    grid-template-columns: 300px minmax(820px, 1fr) 430px !important;
+    align-items: start !important;
+  }
+
+  .resource-grid {
+    grid-template-columns: repeat(2, minmax(320px, 1fr)) !important;
+  }
+
+  .resource {
+    min-height: 150px !important;
+  }
+
+  #captureVideo {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  #captureCanvas {
+    width: 100% !important;
+    height: 460px !important;
+    background: #000 !important;
+    border: 1px solid rgba(54,217,255,.32) !important;
+    border-radius: 16px !important;
+    display: block !important;
+  }
+
+  .capture-box {
+    min-height: 560px !important;
+  }
+
+  .capture-tools {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+  }
+
+  .capture-tools button {
+    width: 100% !important;
+  }
+
+  .capture-modal.open {
+    display: grid !important;
+    grid-template-rows: auto 1fr auto !important;
+  }
+
+  .capture-modal-body {
+    min-height: calc(100vh - 150px) !important;
+  }
+
+  #captureCanvasBig {
+    width: 100% !important;
+    height: 100% !important;
+    background: #000 !important;
+    display: block !important;
+  }
+</style>
 </head>
 <body>
   <div class="shell">
@@ -214,7 +280,7 @@
     </div>
   </div>
 <script>
-const API_BASE="http://127.0.0.1:8000",STORAGE_KEY="con-war-room-games-v071",OLD_KEY="con-war-room-games-v05",SETTINGS_KEY="con-war-room-settings-v06";let selectedId=null,liveEnabled=true,tickSeconds=1,autoSnapshotMinutes=5,lastAutoSnapshotAt=0,captureStream=null,captureTimer=null,radarDeg=0;
+const API_BASE="http://127.0.0.1:8000",STORAGE_KEY="con-war-room-games-v072",OLD_KEY="con-war-room-games-v05",SETTINGS_KEY="con-war-room-settings-v072";let selectedId=null,liveEnabled=true,tickSeconds=1,autoSnapshotMinutes=5,lastAutoSnapshotAt=0,captureStream=null,captureTimer=null,radarDeg=0;
 const resourceMeta={supplies:{label:"Supplies",icon:"ðŸ“¦",target:5000},components:{label:"Components",icon:"âš™ï¸",target:4500},fuel:{label:"Fuel",icon:"â›½",target:3500},electronics:{label:"Electronics",icon:"ðŸ”Œ",target:2500},rares:{label:"Rares",icon:"ðŸ’Ž",target:1800},manpower:{label:"Manpower",icon:"ðŸª–",target:3000},money:{label:"Money",icon:"ðŸ’µ",target:20000}};
 function nowIso(){return new Date().toISOString()}function nowMs(){return Date.now()}function clamp(n,a,b){return Math.max(a,Math.min(b,n))}
 function baseGame(id,name,country){return{id,name,country,phase:"early expansion",day:1,victory_points:"0 / 5920",coalition:[],resources:{supplies:{value:0,hour:0,status:"stable"},components:{value:0,hour:0,status:"stable"},fuel:{value:0,hour:0,status:"critical"},electronics:{value:0,hour:0,status:"low"},rares:{value:0,hour:0,status:"critical"},manpower:{value:0,hour:0,status:"stable"},money:{value:0,hour:0,status:"stable"}},fronts:[{name:"Frente 1",state:"pendiente",risk:"medium",action:"actualizar"}],research:[],notes:"",snapshots:[],feed:[],updated_at:nowIso(),live_base_at:nowIso()}}
@@ -248,6 +314,182 @@ function toggleLive(){liveEnabled=!liveEnabled;liveBtn.textContent=liveEnabled?"
 async function startCapture(){try{captureStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});const v=captureVideo;v.srcObject=captureStream;v.style.display="block";captureState.textContent="capturing";addFeed("Captura iniciada. OCR pendiente v0.7.");captureTimer=setInterval(sampleCaptureFrame,3000)}catch(e){captureState.textContent="denied/offline";addFeed("Captura no iniciada: "+e.message,"warn");render()}}function stopCapture(){if(captureStream)captureStream.getTracks().forEach(t=>t.stop());captureStream=null;if(captureTimer)clearInterval(captureTimer);captureState.textContent="offline"}function sampleCaptureFrame(){const v=captureVideo,c=captureCanvas,ctx=c.getContext("2d");if(!v.videoWidth)return;ctx.drawImage(v,0,0,c.width,c.height);addFeed("Frame capturado en memoria. Preparado para OCR.");render()}
 function liveLoop(){liveClock.textContent=new Date().toLocaleTimeString();radarDeg=(radarDeg+8)%360;radar.style.setProperty("--radarDeg",radarDeg+"deg");updateAllGamesLive();autoSnapshotIfNeeded();const g=selectedGame(),crit=Object.entries(g.resources||{}).filter(([k,r])=>r.status==="critical").map(([k])=>k);economyTick.textContent=crit.length?"critical: "+crit.join(", "):"stable";render()}function boot(){loadSettings();checkApi();render();setInterval(checkApi,5000);setInterval(liveLoop,1000)}boot();
 </script>
+<script id="capture-hotfix-v072">
+(function () {
+  window.__capturePro = window.__capturePro || {
+    stream: null,
+    timer: null,
+    fitMode: "fit",
+    frames: 0,
+    lastFpsAt: Date.now(),
+    fps: 0
+  };
+
+  function drawMessage(canvas, msg) {
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#36d9ff";
+    ctx.font = "24px Segoe UI";
+    ctx.fillText(msg, 28, 55);
+    ctx.fillStyle = "#7f9eb2";
+    ctx.font = "16px Segoe UI";
+    ctx.fillText("Consejo: captura pantalla completa o la ventana del juego, no esta misma pestaña.", 28, 88);
+  }
+
+  function drawContain(ctx, video, canvas, mode) {
+    const cw = canvas.width;
+    const ch = canvas.height;
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+
+    if (!vw || !vh) {
+      drawMessage(canvas, "Esperando señal de captura...");
+      return;
+    }
+
+    const scale = mode === "fill" ? Math.max(cw / vw, ch / vh) : Math.min(cw / vw, ch / vh);
+    const dw = vw * scale;
+    const dh = vh * scale;
+    const dx = (cw - dw) / 2;
+    const dy = (ch - dh) / 2;
+
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, cw, ch);
+    ctx.drawImage(video, dx, dy, dw, dh);
+  }
+
+  window.drawCaptureFrameV072 = function () {
+    const state = window.__capturePro;
+    const video = document.getElementById("captureVideo");
+    const small = document.getElementById("captureCanvas");
+    const big = document.getElementById("captureCanvasBig");
+
+    if (!video || !small) return;
+
+    small.width = 1280;
+    small.height = 720;
+
+    drawContain(small.getContext("2d"), video, small, state.fitMode);
+
+    if (big) {
+      big.width = 1920;
+      big.height = 1080;
+      drawContain(big.getContext("2d"), video, big, state.fitMode);
+    }
+
+    state.frames++;
+    const now = Date.now();
+    if (now - state.lastFpsAt >= 1000) {
+      state.fps = state.frames;
+      state.frames = 0;
+      state.lastFpsAt = now;
+      const fps = document.getElementById("captureHudFps");
+      if (fps) fps.textContent = "FPS " + state.fps;
+    }
+  };
+
+  window.startCapture = async function () {
+    try {
+      if (window.__capturePro.stream) {
+        window.__capturePro.stream.getTracks().forEach(t => t.stop());
+      }
+
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          frameRate: { ideal: 30, max: 60 },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      });
+
+      window.__capturePro.stream = stream;
+
+      const video = document.getElementById("captureVideo");
+      video.srcObject = stream;
+      video.muted = true;
+      video.playsInline = true;
+      video.style.display = "none";
+
+      await video.play();
+
+      document.getElementById("captureState").textContent = "capturing";
+
+      const hud = document.getElementById("captureHudState");
+      if (hud) hud.textContent = "CAPTURING";
+
+      if (window.__capturePro.timer) clearInterval(window.__capturePro.timer);
+      window.__capturePro.timer = setInterval(window.drawCaptureFrameV072, 1000 / 30);
+
+      stream.getVideoTracks()[0].onended = function () {
+        window.stopCapture();
+      };
+
+      if (typeof addFeed === "function") {
+        addFeed("Captura v0.7.2 iniciada. Preview unico canvas activo.", "info");
+        if (typeof render === "function") render();
+      }
+    } catch (e) {
+      document.getElementById("captureState").textContent = "denied/offline";
+      const c = document.getElementById("captureCanvas");
+      drawMessage(c, "Captura no iniciada: " + e.message);
+    }
+  };
+
+  window.stopCapture = function () {
+    if (window.__capturePro.stream) {
+      window.__capturePro.stream.getTracks().forEach(t => t.stop());
+    }
+
+    window.__capturePro.stream = null;
+
+    if (window.__capturePro.timer) {
+      clearInterval(window.__capturePro.timer);
+      window.__capturePro.timer = null;
+    }
+
+    document.getElementById("captureState").textContent = "offline";
+
+    const hud = document.getElementById("captureHudState");
+    if (hud) hud.textContent = "OFFLINE";
+
+    drawMessage(document.getElementById("captureCanvas"), "Captura detenida.");
+  };
+
+  window.toggleCaptureFit = function () {
+    window.__capturePro.fitMode = window.__capturePro.fitMode === "fit" ? "fill" : "fit";
+
+    const badge = document.getElementById("captureZoomState");
+    if (badge) badge.textContent = window.__capturePro.fitMode.toUpperCase();
+
+    window.drawCaptureFrameV072();
+  };
+
+  window.openCaptureModal = function () {
+    const modal = document.getElementById("captureModal");
+    if (!modal) return;
+    modal.classList.add("open");
+    document.body.style.overflow = "hidden";
+    window.drawCaptureFrameV072();
+  };
+
+  window.closeCaptureModal = function () {
+    const modal = document.getElementById("captureModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    document.body.style.overflow = "";
+  };
+
+  window.addEventListener("load", function () {
+    setTimeout(function () {
+      drawMessage(document.getElementById("captureCanvas"), "Pulsa Conectar pantalla para iniciar live feed.");
+    }, 600);
+  });
+})();
+</script>
 </body>
 </html>
+
 
