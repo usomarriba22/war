@@ -1,0 +1,396 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CON War Room</title>
+  <style>
+    :root {
+      --bg: #050b12;
+      --panel: rgba(8, 20, 32, 0.88);
+      --panel2: rgba(13, 35, 52, 0.86);
+      --green: #3dff9b;
+      --cyan: #36d9ff;
+      --red: #ff4d5f;
+      --amber: #ffcc66;
+      --text: #d8f3ff;
+      --muted: #7f9eb2;
+      --border: rgba(54, 217, 255, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(54,217,255,.16), transparent 28%),
+        radial-gradient(circle at 80% 10%, rgba(61,255,155,.10), transparent 26%),
+        linear-gradient(135deg, #03060a 0%, #07111d 48%, #02040a 100%);
+      color: var(--text);
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(54,217,255,.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(54,217,255,.07) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at center, black 0%, transparent 78%);
+      pointer-events: none;
+    }
+
+    .shell {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px rgba(54,217,255,.65);
+    }
+
+    .brand span {
+      color: var(--muted);
+      letter-spacing: 3px;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .status-pill {
+      border: 1px solid var(--border);
+      background: rgba(54,217,255,.08);
+      border-radius: 999px;
+      padding: 10px 14px;
+      color: var(--green);
+      box-shadow: 0 0 22px rgba(61,255,155,.12);
+      font-weight: 700;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 18px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .card, .panel {
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel), rgba(4,10,18,.9));
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 12px 45px rgba(0,0,0,.35), inset 0 0 28px rgba(54,217,255,.035);
+      backdrop-filter: blur(10px);
+    }
+
+    .card h3, .panel h2 {
+      margin: 0 0 12px 0;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .metric {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .critical { color: var(--red); }
+    .low { color: var(--amber); }
+    .stable { color: var(--green); }
+
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .resource {
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      background: rgba(255,255,255,.035);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .resource strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .resource .value {
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .front {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .front:last-child { border-bottom: 0; }
+
+    .tag {
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--cyan);
+    }
+
+    .alert {
+      border-left: 3px solid var(--red);
+      padding: 10px 12px;
+      background: rgba(255,77,95,.08);
+      margin-bottom: 8px;
+      border-radius: 10px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.35);
+      color: var(--text);
+      border-radius: 12px;
+      outline: none;
+    }
+
+    button {
+      padding: 12px 16px;
+      border: 1px solid var(--cyan);
+      border-radius: 12px;
+      background: rgba(54,217,255,.12);
+      color: var(--cyan);
+      font-weight: 800;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      background: rgba(54,217,255,.22);
+      box-shadow: 0 0 22px rgba(54,217,255,.22);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 260px;
+      background: rgba(0,0,0,.35);
+      color: var(--green);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      resize: vertical;
+      font-family: Consolas, monospace;
+    }
+
+    .radar {
+      height: 280px;
+      border-radius: 50%;
+      border: 1px solid rgba(54,217,255,.32);
+      background:
+        radial-gradient(circle, transparent 0 22%, rgba(54,217,255,.08) 23% 24%, transparent 25% 46%, rgba(54,217,255,.08) 47% 48%, transparent 49%),
+        conic-gradient(from 90deg, rgba(61,255,155,.28), transparent 18%, transparent);
+      box-shadow: inset 0 0 50px rgba(54,217,255,.12), 0 0 45px rgba(54,217,255,.10);
+      position: relative;
+      margin: 10px auto 20px;
+      max-width: 280px;
+    }
+
+    .radar::after {
+      content: "";
+      position: absolute;
+      inset: 50%;
+      width: 7px;
+      height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 18px var(--green);
+    }
+
+    @media (max-width: 1000px) {
+      .grid, .cards, .resource-grid { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <span>Tactical Operations Interface</span>
+        <h1>CON War Room</h1>
+      </div>
+      <div class="status-pill" id="apiStatus">API: checking...</div>
+    </div>
+
+    <div class="input-row">
+      <input id="apiBase" value="http://localhost:8000" />
+      <button onclick="loadData()">Sync API</button>
+      <button onclick="copyAdvisor()">Copy Advisor Export</button>
+    </div>
+
+    <div class="cards">
+      <div class="card"><h3>Partida</h3><div class="metric" id="game">---</div><div class="sub" id="country">---</div></div>
+      <div class="card"><h3>Día</h3><div class="metric" id="day">---</div><div class="sub">Operational cycle</div></div>
+      <div class="card"><h3>Victory Points</h3><div class="metric" id="vp">---</div><div class="sub">Progress tracker</div></div>
+      <div class="card"><h3>Coalición</h3><div class="metric" id="coalitionCount">---</div><div class="sub" id="coalition">---</div></div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <h2>Economy Radar</h2>
+          <div class="resource-grid" id="resources"></div>
+        </div>
+
+        <div class="panel" style="margin-top:18px;">
+          <h2>War Fronts</h2>
+          <div id="fronts"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h2>Threat Radar</h2>
+          <div class="radar"></div>
+          <div id="alerts"></div>
+        </div>
+
+        <div class="panel" style="margin-top:18px;">
+          <h2>Advisor Export</h2>
+          <textarea id="advisorExport">Sync API para generar export...</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let lastExport = "";
+
+    async function getJson(path) {
+      const base = document.getElementById("apiBase").value.replace(/\/$/, "");
+      const res = await fetch(base + path);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return await res.json();
+    }
+
+    function cls(status) {
+      if (status === "critical") return "critical";
+      if (status === "low") return "low";
+      return "stable";
+    }
+
+    async function loadData() {
+      try {
+        const health = await getJson("/health");
+        document.getElementById("apiStatus").textContent = "API: " + health.status.toUpperCase();
+        document.getElementById("apiStatus").style.color = "var(--green)";
+
+        const data = await getJson("/api/game/demo");
+        document.getElementById("game").textContent = data.game.replace("World War 3 - ", "");
+        document.getElementById("country").textContent = data.country;
+        document.getElementById("day").textContent = data.day;
+        document.getElementById("vp").textContent = data.victory_points;
+        document.getElementById("coalitionCount").textContent = data.coalition.length;
+        document.getElementById("coalition").textContent = data.coalition.join(" / ");
+
+        const resources = document.getElementById("resources");
+        resources.innerHTML = "";
+        Object.entries(data.resources).forEach(([name, r]) => {
+          resources.innerHTML += `
+            <div class="resource">
+              <div>
+                <strong>${name.toUpperCase()}</strong>
+                <span class="${cls(r.status)}">${r.status}</span>
+              </div>
+              <div>
+                <div class="value">${r.value}</div>
+                <div class="sub">+${r.hour}/h</div>
+              </div>
+            </div>`;
+        });
+
+        const fronts = document.getElementById("fronts");
+        fronts.innerHTML = "";
+        data.fronts.forEach(f => {
+          fronts.innerHTML += `
+            <div class="front">
+              <div><strong>${f.name}</strong><div class="sub">${f.state} — ${f.action}</div></div>
+              <div class="tag">${f.risk}</div>
+            </div>`;
+        });
+
+        const alerts = document.getElementById("alerts");
+        alerts.innerHTML = "";
+        data.alerts.forEach(a => alerts.innerHTML += `<div class="alert">${a}</div>`);
+
+        const exportData = await getJson("/api/advisor/export");
+        lastExport = exportData.export;
+        document.getElementById("advisorExport").value = lastExport;
+      } catch (e) {
+        document.getElementById("apiStatus").textContent = "API: OFFLINE";
+        document.getElementById("apiStatus").style.color = "var(--red)";
+        document.getElementById("advisorExport").value = "Error conectando con API: " + e.message;
+      }
+    }
+
+    async function copyAdvisor() {
+      const text = document.getElementById("advisorExport").value;
+      await navigator.clipboard.writeText(text);
+      alert("Advisor Export copiado.");
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

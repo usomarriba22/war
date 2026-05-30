@@ -1,0 +1,44 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: warroom-web
+  namespace: con-warroom
+  labels:
+    app: warroom-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: warroom-web
+  template:
+    metadata:
+      labels:
+        app: warroom-web
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      containers:
+        - name: warroom-web
+          image: ghcr.io/usomarriba22/con-warroom-web:dev
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 150m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20

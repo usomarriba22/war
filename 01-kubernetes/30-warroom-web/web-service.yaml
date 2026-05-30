@@ -1,0 +1,15 @@
+﻿apiVersion: v1
+kind: Service
+metadata:
+  name: warroom-web
+  namespace: con-warroom
+  labels:
+    app: warroom-web
+spec:
+  type: ClusterIP
+  selector:
+    app: warroom-web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
