@@ -1,4 +1,4 @@
-﻿export const RESOURCE_META = {
+export const RESOURCE_META = {
   supplies: { label: "Supplies", icon: "ðŸ“¦", target: 5000 },
   components: { label: "Components", icon: "âš™ï¸", target: 4500 },
   fuel: { label: "Fuel", icon: "â›½", target: 3500 },
