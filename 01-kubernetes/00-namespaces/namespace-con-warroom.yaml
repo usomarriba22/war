@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: con-warroom
+  labels:
+    app.kubernetes.io/part-of: con-warroom
+    environment: lab

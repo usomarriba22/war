@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-warroom
+  namespace: con-warroom
+  labels:
+    app: hello-warroom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-warroom
+  template:
+    metadata:
+      labels:
+        app: hello-warroom
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi

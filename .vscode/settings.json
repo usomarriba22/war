@@ -1,0 +1,8 @@
+{
+  "yaml.validate": true,
+  "files.associations": {
+    "*.yaml": "yaml",
+    "*.yml": "yaml"
+  },
+  "terminal.integrated.defaultProfile.windows": "PowerShell"
+}
