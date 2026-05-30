@@ -74,3 +74,46 @@
 .captureMark.big span { width: 34px; height: 34px; }
 .captureMark.big em { font-size: 14px; }
 .hint { line-height: 1.45; }
+/* v0.8.4 resource images + single click tactical markers */
+.resImage {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid rgba(54,217,255,.30);
+  background: rgba(54,217,255,.08);
+  box-shadow: 0 0 16px rgba(54,217,255,.22);
+  padding: 3px;
+}
+
+.resourceTop strong {
+  gap: 12px;
+  font-size: 15px;
+  color: #d8f3ff;
+}
+
+.resourceCard {
+  min-height: 172px;
+}
+
+.captureStage,
+.captureBigStage {
+  cursor: crosshair;
+}
+
+.captureStage::after,
+.captureBigStage::after {
+  content: "CLICK PARA MARCAR OBJETIVO";
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  color: rgba(216,243,255,.72);
+  border: 1px solid rgba(54,217,255,.30);
+  background: rgba(0,0,0,.55);
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .8px;
+  pointer-events: none;
+}

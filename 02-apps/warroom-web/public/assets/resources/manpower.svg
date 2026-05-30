@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <defs>
+    <radialGradient id="g" cx="35%" cy="25%" r="70%">
+      <stop offset="0%" stop-color="#36d9ff" stop-opacity="0.95"/>
+      <stop offset="55%" stop-color="#0b5f78" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#02050b" stop-opacity="1"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect x="7" y="7" width="82" height="82" rx="18" fill="url(#g)" stroke="#36d9ff" stroke-width="2"/>
+  <circle cx="48" cy="35" r="19" fill="#07111d" stroke="#3dff9b" stroke-width="2" opacity="0.85"/>
+  <text x="48" y="42" text-anchor="middle" font-size="18" font-family="Consolas, monospace" font-weight="900" fill="#d8f3ff" filter="url(#glow)">MAN</text>
+  <text x="48" y="72" text-anchor="middle" font-size="10" font-family="Consolas, monospace" font-weight="800" fill="#8fb4c7">MANPOWER</text>
+</svg>
