@@ -1,686 +1,94 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CON War Room Multi-Partida</title>
+  <title>CON War Room v0.6</title>
   <style>
-    :root {
-      --bg: #04070d;
-      --panel: rgba(8, 20, 32, 0.92);
-      --panel2: rgba(10, 28, 43, 0.92);
-      --green: #3dff9b;
-      --cyan: #36d9ff;
-      --red: #ff4d5f;
-      --amber: #ffcc66;
-      --text: #d8f3ff;
-      --muted: #7f9eb2;
-      --border: rgba(54, 217, 255, 0.28);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at 18% 12%, rgba(54,217,255,.15), transparent 30%),
-        radial-gradient(circle at 80% 8%, rgba(61,255,155,.10), transparent 24%),
-        linear-gradient(135deg, #02040a 0%, #07111d 48%, #02040a 100%);
-      color: var(--text);
-      font-family: Segoe UI, Inter, Arial, sans-serif;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(54,217,255,.055) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(54,217,255,.055) 1px, transparent 1px);
-      background-size: 42px 42px;
-      pointer-events: none;
-      mask-image: radial-gradient(circle at center, black 0%, transparent 80%);
-    }
-
-    .shell {
-      max-width: 1500px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: center;
-      margin-bottom: 18px;
-    }
-
-    h1 {
-      margin: 0;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      font-size: 34px;
-      text-shadow: 0 0 18px rgba(54,217,255,.55);
-    }
-
-    .subtitle {
-      color: var(--muted);
-      font-size: 12px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-top: 6px;
-    }
-
-    .pill {
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 9px 13px;
-      background: rgba(54,217,255,.08);
-      color: var(--green);
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 300px 1fr 380px;
-      gap: 16px;
-    }
-
-    .panel, .card {
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, var(--panel), rgba(3,9,16,.92));
-      border-radius: 18px;
-      padding: 16px;
-      box-shadow: 0 12px 40px rgba(0,0,0,.34), inset 0 0 24px rgba(54,217,255,.04);
-      backdrop-filter: blur(10px);
-    }
-
-    h2, h3 {
-      margin: 0 0 12px 0;
-      font-size: 13px;
-      color: var(--muted);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-    }
-
-    .game-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .game-btn {
-      text-align: left;
-      padding: 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.035);
-      color: var(--text);
-      cursor: pointer;
-    }
-
-    .game-btn.active {
-      border-color: var(--cyan);
-      background: rgba(54,217,255,.13);
-      box-shadow: 0 0 20px rgba(54,217,255,.14);
-    }
-
-    .game-btn strong { display: block; margin-bottom: 4px; }
-    .game-btn span { color: var(--muted); font-size: 12px; }
-
-    input, textarea, select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid rgba(54,217,255,.25);
-      border-radius: 12px;
-      background: rgba(0,0,0,.32);
-      color: var(--text);
-      outline: none;
-    }
-
-    textarea {
-      min-height: 110px;
-      resize: vertical;
-      font-family: Consolas, monospace;
-      font-size: 12px;
-    }
-
-    button {
-      padding: 10px 12px;
-      border: 1px solid var(--cyan);
-      border-radius: 12px;
-      background: rgba(54,217,255,.12);
-      color: var(--cyan);
-      font-weight: 800;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: .8px;
-    }
-
-    button:hover { background: rgba(54,217,255,.22); }
-
-    .danger {
-      border-color: var(--red);
-      color: var(--red);
-      background: rgba(255,77,95,.08);
-    }
-
-    .grid2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .grid3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-
-    .field label {
-      display: block;
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 5px;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-
-    .metric {
-      font-size: 26px;
-      font-weight: 900;
-    }
-
-    .sub {
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    .resources {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-
-    .resource {
-      padding: 12px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.035);
-      border: 1px solid rgba(255,255,255,.08);
-    }
-
-    .res-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .res-name {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 900;
-      text-transform: uppercase;
-      font-size: 13px;
-    }
-
-    .resicon {
-      width: 30px;
-      height: 30px;
-      border-radius: 10px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at 30% 30%, rgba(54,217,255,.28), rgba(0,0,0,.25));
-      border: 1px solid rgba(54,217,255,.30);
-      box-shadow: 0 0 14px rgba(54,217,255,.16);
-    }
-
-    .critical { color: var(--red); }
-    .low { color: var(--amber); }
-    .stable { color: var(--green); }
-
-    .front {
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      padding: 10px 0;
-    }
-
-    .front:last-child { border-bottom: 0; }
-
-    .tag {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      color: var(--cyan);
-      font-size: 11px;
-      margin-top: 4px;
-    }
-
-    .advisor {
-      width: 100%;
-      min-height: 360px;
-      color: var(--green);
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .snapshot {
-      font-size: 12px;
-      border-left: 3px solid var(--cyan);
-      background: rgba(54,217,255,.06);
-      padding: 8px;
-      margin-bottom: 8px;
-      border-radius: 10px;
-    }
-
-    @media (max-width: 1200px) {
-      .layout { grid-template-columns: 1fr; }
-      .cards, .resources, .grid2, .grid3 { grid-template-columns: 1fr; }
-    }
+    :root{--bg:#02040a;--panel:rgba(8,20,32,.92);--panel2:rgba(10,30,46,.88);--green:#3dff9b;--cyan:#36d9ff;--red:#ff4d5f;--amber:#ffcc66;--purple:#bf7dff;--text:#d8f3ff;--muted:#7f9eb2;--border:rgba(54,217,255,.28);--shadow:0 18px 60px rgba(0,0,0,.42),inset 0 0 24px rgba(54,217,255,.035)}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;color:var(--text);font-family:Segoe UI,Inter,Arial,sans-serif;background:radial-gradient(circle at 10% 8%,rgba(54,217,255,.18),transparent 24%),radial-gradient(circle at 78% 4%,rgba(61,255,155,.12),transparent 22%),radial-gradient(circle at 50% 90%,rgba(191,125,255,.09),transparent 30%),linear-gradient(135deg,#010309 0%,#07111d 48%,#010208 100%);overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(54,217,255,.052) 1px,transparent 1px),linear-gradient(90deg,rgba(54,217,255,.052) 1px,transparent 1px);background-size:42px 42px;pointer-events:none;mask-image:radial-gradient(circle at center,black 0%,transparent 80%);z-index:0}
+    .shell{position:relative;z-index:2;max-width:1780px;margin:0 auto;padding:22px}.topbar{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;margin-bottom:16px}
+    h1{margin:0;font-size:36px;line-height:1;letter-spacing:2px;text-transform:uppercase;text-shadow:0 0 22px rgba(54,217,255,.65)}.subtitle{margin-top:7px;color:var(--muted);letter-spacing:3px;font-size:12px;text-transform:uppercase}
+    .top-actions,.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.pill{border:1px solid var(--border);border-radius:999px;padding:9px 13px;background:rgba(54,217,255,.08);color:var(--green);font-weight:900;white-space:nowrap;box-shadow:0 0 22px rgba(61,255,155,.12)}
+    .layout{display:grid;grid-template-columns:320px 1fr 430px;gap:16px}.panel,.card{border:1px solid var(--border);background:linear-gradient(180deg,var(--panel),rgba(3,9,16,.92));border-radius:18px;padding:15px;box-shadow:var(--shadow);backdrop-filter:blur(10px)}.stack{display:flex;flex-direction:column;gap:14px}
+    .panel-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}h2,h3{margin:0;font-size:13px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}.mini,.sub{color:var(--muted);font-size:12px}
+    button{padding:10px 12px;border:1px solid var(--cyan);border-radius:12px;background:rgba(54,217,255,.12);color:var(--cyan);font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:.8px;transition:.15s}button:hover{transform:translateY(-1px);background:rgba(54,217,255,.22);box-shadow:0 0 22px rgba(54,217,255,.22)}button.danger{border-color:var(--red);color:var(--red);background:rgba(255,77,95,.08)}button.good{border-color:var(--green);color:var(--green);background:rgba(61,255,155,.08)}button.warn{border-color:var(--amber);color:var(--amber);background:rgba(255,204,102,.08)}
+    input,textarea,select{width:100%;padding:10px 12px;border:1px solid rgba(54,217,255,.25);border-radius:12px;background:rgba(0,0,0,.32);color:var(--text);outline:none}textarea{min-height:105px;resize:vertical;font-family:Consolas,monospace;font-size:12px}.field label{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .game-list{display:flex;flex-direction:column;gap:10px}.game-btn{text-align:left;padding:13px;border-radius:15px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:var(--text);cursor:pointer;position:relative;overflow:hidden}.game-btn.active{border-color:var(--cyan);background:rgba(54,217,255,.14);box-shadow:0 0 24px rgba(54,217,255,.18)}.game-btn strong{display:block;margin-bottom:5px}.game-btn span{color:var(--muted);font-size:12px}
+    .cards{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px}.metric{font-size:27px;font-weight:950;line-height:1.05}.resource-grid{display:grid;grid-template-columns:repeat(2,minmax(245px,1fr));gap:10px}
+    .resource{padding:12px;border-radius:15px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden}.resource:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cyan);opacity:.7}.resource.critical:before{background:var(--red)}.resource.low:before{background:var(--amber)}.resource.stable:before{background:var(--green)}
+    .res-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}.res-name{display:flex;align-items:center;gap:8px;font-weight:950;text-transform:uppercase;font-size:13px}.resicon{width:32px;height:32px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,rgba(54,217,255,.28),rgba(0,0,0,.25));border:1px solid rgba(54,217,255,.30);box-shadow:0 0 14px rgba(54,217,255,.16);font-size:18px}
+    .critical{color:var(--red)}.low{color:var(--amber)}.stable{color:var(--green)}.bar{height:6px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin-top:8px}.bar>i{display:block;height:100%;width:20%;border-radius:99px;background:linear-gradient(90deg,var(--cyan),var(--green));box-shadow:0 0 12px rgba(61,255,155,.35)}
+    .front,.snapshot,.feed-item{font-size:12px;border-left:3px solid var(--cyan);background:rgba(54,217,255,.055);padding:9px;margin-bottom:8px;border-radius:10px}.feed-item.warn{border-color:var(--amber);background:rgba(255,204,102,.06)}.feed-item.danger{border-color:var(--red);background:rgba(255,77,95,.06)}.tag{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid var(--border);color:var(--cyan);font-size:11px;margin-top:5px}.advisor{width:100%;min-height:315px;color:var(--green);line-height:1.35}
+    canvas{width:100%;height:190px;background:rgba(0,0,0,.20);border:1px solid rgba(54,217,255,.16);border-radius:15px}.radar{width:260px;height:260px;border-radius:50%;margin:4px auto 12px;border:1px solid rgba(54,217,255,.35);background:radial-gradient(circle,transparent 0 22%,rgba(54,217,255,.08) 23% 24%,transparent 25% 46%,rgba(54,217,255,.08) 47% 48%,transparent 49%),conic-gradient(from var(--radarDeg,0deg),rgba(61,255,155,.32),transparent 22%,transparent);box-shadow:inset 0 0 60px rgba(54,217,255,.14),0 0 45px rgba(54,217,255,.10);position:relative}.radar:after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;transform:translate(-50%,-50%);border-radius:50%;background:var(--green);box-shadow:0 0 20px var(--green)}.dot{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 14px var(--red)}
+    .capture-box{border:1px dashed rgba(54,217,255,.28);border-radius:16px;padding:10px;background:rgba(255,255,255,.025)}video{width:100%;max-height:180px;background:#000;border-radius:12px;display:none}
+    @media(max-width:1400px){.layout{grid-template-columns:300px 1fr}.right-col{grid-column:1/-1}.cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.layout,.cards,.resource-grid,.grid2,.grid3,.grid4{grid-template-columns:1fr}.topbar{grid-template-columns:1fr}.top-actions{justify-content:flex-start}}
   </style>
 </head>
 <body>
   <div class="shell">
     <div class="topbar">
-      <div>
-        <h1>CON War Room</h1>
-        <div class="subtitle">Multi-game tactical command center</div>
-      </div>
-      <div class="pill" id="status">API: checking...</div>
+      <div><h1>CON War Room</h1><div class="subtitle">v0.6 Live multi-game tactical command center</div></div>
+      <div class="top-actions"><div class="pill" id="status">API: checking...</div><div class="pill" id="liveClock">--:--:--</div><button class="good" onclick="toggleLive()" id="liveBtn">Live ON</button><button onclick="manualSnapshot()">Snapshot</button></div>
     </div>
-
     <div class="layout">
-      <aside class="panel">
-        <h2>Partidas</h2>
-        <div class="game-list" id="gameList"></div>
-        <div class="row">
-          <button onclick="createGame()">Nueva partida</button>
-          <button class="danger" onclick="deleteGame()">Borrar</button>
-        </div>
+      <aside class="stack">
+        <section class="panel"><div class="panel-title"><h2>Partidas</h2><span class="mini" id="gameCount">0</span></div><div class="game-list" id="gameList"></div><div class="row"><button onclick="createGame()">Nueva</button><button class="danger" onclick="deleteGame()">Borrar</button></div></section>
+        <section class="panel"><div class="panel-title"><h2>Live Engine</h2><span class="mini" id="liveState">running</span></div><div class="grid2"><div class="field"><label>Tick UI segundos</label><input type="number" id="tickSeconds" value="1" min="1" max="60" onchange="setTickSeconds(Number(this.value))"></div><div class="field"><label>Auto snapshot minutos</label><input type="number" id="snapMinutes" value="5" min="1" max="120" onchange="setAutoSnapshotMinutes(Number(this.value))"></div></div><div class="row"><button onclick="saveSettings()">Guardar settings</button><button class="warn" onclick="resetLocal()">Reset local</button></div><div class="sub">Stock live = stock manual + producción/hora. OCR real viene en v0.7.</div></section>
+        <section class="panel"><div class="panel-title"><h2>Import / Export</h2><span class="mini">JSON</span></div><textarea id="importExportBox" placeholder="Exporta o pega JSON aquí"></textarea><div class="row"><button onclick="exportGames()">Export</button><button onclick="importGames()">Import</button></div></section>
       </aside>
-
-      <main>
-        <div class="cards">
-          <div class="card"><h3>Partida</h3><div class="metric" id="mName">---</div><div class="sub" id="mCountry">---</div></div>
-          <div class="card"><h3>Día</h3><div class="metric" id="mDay">---</div><div class="sub">Ciclo operativo</div></div>
-          <div class="card"><h3>VP</h3><div class="metric" id="mVP">---</div><div class="sub">Victory Points</div></div>
-          <div class="card"><h3>Snapshots</h3><div class="metric" id="mSnapshots">0</div><div class="sub">Histórico local</div></div>
-        </div>
-
-        <section class="panel">
-          <h2>Ficha de partida</h2>
-          <div class="grid3">
-            <div class="field"><label>Nombre</label><input id="name" oninput="updateField('name', this.value)" /></div>
-            <div class="field"><label>País</label><input id="country" oninput="updateField('country', this.value)" /></div>
-            <div class="field"><label>Día</label><input id="day" type="number" oninput="updateField('day', Number(this.value))" /></div>
-          </div>
-          <div class="grid2" style="margin-top:10px;">
-            <div class="field"><label>VP</label><input id="vp" oninput="updateField('victory_points', this.value)" /></div>
-            <div class="field"><label>Coalición separada por comas</label><input id="coalition" oninput="updateCoalition(this.value)" /></div>
-          </div>
-        </section>
-
-        <section class="panel" style="margin-top:16px;">
-          <h2>Economy Radar</h2>
-          <div class="resources" id="resources"></div>
-          <div class="row">
-            <button onclick="saveSnapshot()">Guardar snapshot</button>
-            <button onclick="loadSelected()">Recargar</button>
-          </div>
-        </section>
-
-        <section class="panel" style="margin-top:16px;">
-          <h2>Frentes / Investigación / Notas</h2>
-          <div class="grid2">
-            <div class="field">
-              <label>Frentes JSON</label>
-              <textarea id="frontsJson" oninput="updateFronts(this.value)"></textarea>
-            </div>
-            <div class="field">
-              <label>Research separado por comas</label>
-              <textarea id="research" oninput="updateResearch(this.value)"></textarea>
-            </div>
-          </div>
-          <div class="field" style="margin-top:10px;">
-            <label>Notas</label>
-            <textarea id="notes" oninput="updateField('notes', this.value)"></textarea>
-          </div>
-        </section>
+      <main class="stack">
+        <section class="cards"><div class="card"><h3>Partida</h3><div class="metric" id="mName">---</div><div class="sub" id="mCountry">---</div></div><div class="card"><h3>Día</h3><div class="metric" id="mDay">---</div><div class="sub">Ciclo operativo</div></div><div class="card"><h3>VP</h3><div class="metric" id="mVP">---</div><div class="sub">Victory Points</div></div><div class="card"><h3>Readiness</h3><div class="metric" id="mReadiness">--%</div><div class="sub">Economía + frentes</div></div><div class="card"><h3>ETA crítico</h3><div class="metric" id="mCriticalEta">---</div><div class="sub">Primer recurso bajo</div></div></section>
+        <section class="panel"><div class="panel-title"><h2>Ficha de partida</h2><span class="mini" id="lastUpdate">---</span></div><div class="grid4"><div class="field"><label>Nombre</label><input id="name" oninput="updateField('name', this.value)" /></div><div class="field"><label>País</label><input id="country" oninput="updateField('country', this.value)" /></div><div class="field"><label>Día</label><input id="day" type="number" oninput="updateField('day', Number(this.value))" /></div><div class="field"><label>VP</label><input id="vp" oninput="updateField('victory_points', this.value)" /></div></div><div class="grid2" style="margin-top:10px;"><div class="field"><label>Coalición</label><input id="coalition" oninput="updateCoalition(this.value)" /></div><div class="field"><label>Fase estratégica</label><select id="phase" onchange="updateField('phase', this.value)"><option>early expansion</option><option>economic consolidation</option><option>regional war</option><option>coalition war</option><option>endgame</option></select></div></div></section>
+        <section class="panel"><div class="panel-title"><h2>Economy Radar Live</h2><span class="mini" id="economyTick">tick</span></div><div class="resource-grid" id="resources"></div></section>
+        <section class="grid2"><div class="panel"><div class="panel-title"><h2>Histórico de stock</h2><span class="mini">últimos snapshots</span></div><canvas id="stockChart" width="900" height="320"></canvas></div><div class="panel"><div class="panel-title"><h2>Producción/hora</h2><span class="mini">comparativa</span></div><canvas id="prodChart" width="900" height="320"></canvas></div></section>
+        <section class="panel"><div class="panel-title"><h2>Frentes / Investigación / Notas</h2><span class="mini">editable por partida</span></div><div class="grid3"><div class="field"><label>Frentes JSON</label><textarea id="frontsJson" oninput="updateFronts(this.value)"></textarea></div><div class="field"><label>Research separado por comas</label><textarea id="research" oninput="updateResearch(this.value)"></textarea></div><div class="field"><label>Notas</label><textarea id="notes" oninput="updateField('notes', this.value)"></textarea></div></div></section>
       </main>
-
-      <aside>
-        <section class="panel">
-          <h2>Advisor</h2>
-          <textarea class="advisor" id="advisorText">Selecciona una partida y pulsa Ask Advisor.</textarea>
-          <div class="row">
-            <button onclick="askAdvisor()">Ask Advisor</button>
-            <button onclick="copyAdvisor()">Copiar export</button>
-          </div>
-        </section>
-
-        <section class="panel" style="margin-top:16px;">
-          <h2>Frentes activos</h2>
-          <div id="frontList"></div>
-        </section>
-
-        <section class="panel" style="margin-top:16px;">
-          <h2>Snapshots</h2>
-          <div id="snapshots"></div>
-        </section>
+      <aside class="stack right-col">
+        <section class="panel"><div class="panel-title"><h2>Threat Radar</h2><span class="mini" id="riskText">risk scan</span></div><div class="radar" id="radar"><span class="dot" style="left:65%;top:22%"></span><span class="dot" style="left:30%;top:70%;background:var(--amber);box-shadow:0 0 14px var(--amber)"></span><span class="dot" style="left:72%;top:68%;background:var(--cyan);box-shadow:0 0 14px var(--cyan)"></span></div><div id="frontList"></div></section>
+        <section class="panel"><div class="panel-title"><h2>Advisor</h2><span class="mini">partida seleccionada</span></div><textarea class="advisor" id="advisorText">Selecciona una partida y pulsa Ask Advisor.</textarea><div class="row"><button onclick="askAdvisor()">Ask Advisor</button><button onclick="copyAdvisor()">Copiar</button></div></section>
+        <section class="panel"><div class="panel-title"><h2>Captura Live</h2><span class="mini" id="captureState">offline</span></div><div class="capture-box"><video id="captureVideo" autoplay muted playsinline></video><canvas id="captureCanvas" width="640" height="220"></canvas><div class="row"><button onclick="startCapture()">Conectar pantalla</button><button onclick="stopCapture()">Parar</button></div><div class="sub">v0.6 captura frames en memoria. v0.7 añadirá calibración y OCR de recursos.</div></div></section>
+        <section class="panel"><div class="panel-title"><h2>Activity Feed</h2><span class="mini">auto</span></div><div id="feed"></div></section>
+        <section class="panel"><div class="panel-title"><h2>Snapshots</h2><span class="mini" id="snapCount">0</span></div><div id="snapshots"></div></section>
       </aside>
     </div>
   </div>
-
 <script>
-const API_BASE = "http://127.0.0.1:8000";
-const STORAGE_KEY = "con-war-room-games-v05";
-let selectedId = null;
-
-const resourceMeta = {
-  supplies: {label: "Supplies", icon: "📦"},
-  components: {label: "Components", icon: "⚙️"},
-  fuel: {label: "Fuel", icon: "⛽"},
-  electronics: {label: "Electronics", icon: "🔌"},
-  rares: {label: "Rares", icon: "💎"},
-  manpower: {label: "Manpower", icon: "🪖"},
-  money: {label: "Money", icon: "💵"}
-};
-
-function seedGames() {
-  return [
-    baseGame("colombia-main", "Colombia Principal", "Colombia"),
-    baseGame("slot-2", "Partida 2", "Pendiente"),
-    baseGame("slot-3", "Partida 3", "Pendiente"),
-    baseGame("slot-4", "Partida 4", "Pendiente")
-  ];
-}
-
-function baseGame(id, name, country) {
-  return {
-    id, name, country,
-    day: 1,
-    victory_points: "0 / 5920",
-    coalition: [],
-    resources: {
-      supplies: {value: 0, hour: 0, status: "stable"},
-      components: {value: 0, hour: 0, status: "stable"},
-      fuel: {value: 0, hour: 0, status: "critical"},
-      electronics: {value: 0, hour: 0, status: "low"},
-      rares: {value: 0, hour: 0, status: "critical"},
-      manpower: {value: 0, hour: 0, status: "stable"},
-      money: {value: 0, hour: 0, status: "stable"}
-    },
-    fronts: [
-      {name: "Frente 1", state: "pendiente", risk: "medium", action: "actualizar"}
-    ],
-    research: [],
-    notes: "",
-    snapshots: [],
-    updated_at: new Date().toISOString()
-  };
-}
-
-function getGames() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    const seeded = seedGames();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-    selectedId = seeded[0].id;
-    return seeded;
-  }
-  return JSON.parse(raw);
-}
-
-function saveGames(games) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
-}
-
-function selectedGame() {
-  const games = getGames();
-  if (!selectedId) selectedId = games[0]?.id;
-  return games.find(g => g.id === selectedId) || games[0];
-}
-
-function replaceSelected(game) {
-  const games = getGames();
-  const idx = games.findIndex(g => g.id === game.id);
-  game.updated_at = new Date().toISOString();
-  if (idx >= 0) games[idx] = game;
-  saveGames(games);
-  render();
-}
-
-function statusClass(s) {
-  if (s === "critical") return "critical";
-  if (s === "low") return "low";
-  return "stable";
-}
-
-async function checkApi() {
-  try {
-    const res = await fetch(API_BASE + "/health");
-    const data = await res.json();
-    document.getElementById("status").textContent = "API: " + data.status.toUpperCase();
-  } catch {
-    document.getElementById("status").textContent = "API: OFFLINE";
-    document.getElementById("status").style.color = "var(--red)";
-  }
-}
-
-function renderGameList() {
-  const games = getGames();
-  const box = document.getElementById("gameList");
-  box.innerHTML = "";
-  games.forEach(g => {
-    const btn = document.createElement("button");
-    btn.className = "game-btn" + (g.id === selectedId ? " active" : "");
-    btn.innerHTML = `<strong>${g.name}</strong><span>${g.country} · Día ${g.day} · ${g.victory_points}</span>`;
-    btn.onclick = () => { selectedId = g.id; render(); };
-    box.appendChild(btn);
-  });
-}
-
-function renderMetrics(g) {
-  document.getElementById("mName").textContent = g.name;
-  document.getElementById("mCountry").textContent = g.country;
-  document.getElementById("mDay").textContent = g.day;
-  document.getElementById("mVP").textContent = g.victory_points;
-  document.getElementById("mSnapshots").textContent = g.snapshots?.length || 0;
-
-  document.getElementById("name").value = g.name;
-  document.getElementById("country").value = g.country;
-  document.getElementById("day").value = g.day;
-  document.getElementById("vp").value = g.victory_points;
-  document.getElementById("coalition").value = (g.coalition || []).join(", ");
-  document.getElementById("frontsJson").value = JSON.stringify(g.fronts || [], null, 2);
-  document.getElementById("research").value = (g.research || []).join(", ");
-  document.getElementById("notes").value = g.notes || "";
-}
-
-function renderResources(g) {
-  const box = document.getElementById("resources");
-  box.innerHTML = "";
-
-  Object.entries(resourceMeta).forEach(([key, meta]) => {
-    const r = g.resources[key] || {value: 0, hour: 0, status: "stable"};
-    const div = document.createElement("div");
-    div.className = "resource";
-    div.innerHTML = `
-      <div class="res-head">
-        <div class="res-name"><span class="resicon">${meta.icon}</span>${meta.label}</div>
-        <span class="${statusClass(r.status)}">${r.status}</span>
-      </div>
-      <div class="grid3">
-        <div class="field"><label>Stock</label><input type="number" value="${r.value}" onchange="updateResource('${key}','value',Number(this.value))"></div>
-        <div class="field"><label>Hora</label><input type="number" value="${r.hour}" onchange="updateResource('${key}','hour',Number(this.value))"></div>
-        <div class="field"><label>Status</label>
-          <select onchange="updateResource('${key}','status',this.value)">
-            <option ${r.status === "stable" ? "selected" : ""}>stable</option>
-            <option ${r.status === "low" ? "selected" : ""}>low</option>
-            <option ${r.status === "critical" ? "selected" : ""}>critical</option>
-          </select>
-        </div>
-      </div>
-    `;
-    box.appendChild(div);
-  });
-}
-
-function renderFronts(g) {
-  const box = document.getElementById("frontList");
-  box.innerHTML = "";
-  (g.fronts || []).forEach(f => {
-    const div = document.createElement("div");
-    div.className = "front";
-    div.innerHTML = `<strong>${f.name}</strong><div class="sub">${f.state} — ${f.action}</div><span class="tag">${f.risk}</span>`;
-    box.appendChild(div);
-  });
-}
-
-function renderSnapshots(g) {
-  const box = document.getElementById("snapshots");
-  box.innerHTML = "";
-  (g.snapshots || []).slice().reverse().slice(0, 8).forEach(s => {
-    const div = document.createElement("div");
-    div.className = "snapshot";
-    div.innerHTML = `<strong>${new Date(s.time).toLocaleString()}</strong><br>Día ${s.day} · VP ${s.victory_points}<br>Fuel ${s.resources?.fuel?.value ?? 0} · Raros ${s.resources?.rares?.value ?? 0}`;
-    box.appendChild(div);
-  });
-}
-
-function render() {
-  const games = getGames();
-  if (!selectedId) selectedId = games[0].id;
-  const g = selectedGame();
-  renderGameList();
-  renderMetrics(g);
-  renderResources(g);
-  renderFronts(g);
-  renderSnapshots(g);
-}
-
-function updateField(field, value) {
-  const g = selectedGame();
-  g[field] = value;
-  replaceSelected(g);
-}
-
-function updateCoalition(value) {
-  const g = selectedGame();
-  g.coalition = value.split(",").map(x => x.trim()).filter(Boolean);
-  replaceSelected(g);
-}
-
-function updateResearch(value) {
-  const g = selectedGame();
-  g.research = value.split(",").map(x => x.trim()).filter(Boolean);
-  replaceSelected(g);
-}
-
-function updateFronts(value) {
-  const g = selectedGame();
-  try {
-    g.fronts = JSON.parse(value);
-    replaceSelected(g);
-  } catch {
-    // no render until valid JSON
-  }
-}
-
-function updateResource(key, prop, value) {
-  const g = selectedGame();
-  if (!g.resources[key]) g.resources[key] = {};
-  g.resources[key][prop] = value;
-  replaceSelected(g);
-}
-
-function createGame() {
-  const games = getGames();
-  const id = "game-" + Date.now();
-  const g = baseGame(id, "Nueva partida", "Pais");
-  games.push(g);
-  selectedId = id;
-  saveGames(games);
-  render();
-}
-
-function deleteGame() {
-  let games = getGames();
-  if (games.length <= 1) return alert("Debe quedar al menos una partida.");
-  const g = selectedGame();
-  if (!confirm("Borrar partida: " + g.name + "?")) return;
-  games = games.filter(x => x.id !== g.id);
-  selectedId = games[0].id;
-  saveGames(games);
-  render();
-}
-
-function saveSnapshot() {
-  const g = selectedGame();
-  const snapshot = {
-    time: new Date().toISOString(),
-    day: g.day,
-    victory_points: g.victory_points,
-    resources: JSON.parse(JSON.stringify(g.resources)),
-    fronts: JSON.parse(JSON.stringify(g.fronts || [])),
-    research: JSON.parse(JSON.stringify(g.research || []))
-  };
-  g.snapshots = g.snapshots || [];
-  g.snapshots.push(snapshot);
-  replaceSelected(g);
-}
-
-function loadSelected() {
-  render();
-}
-
-async function askAdvisor() {
-  const g = selectedGame();
-  const body = {
-    game_state: g,
-    question: "Analiza esta partida seleccionada y dime que hacer en las proximas 6-12 horas. Prioriza economia, investigacion, expansion, defensa y uso de elites."
-  };
-
-  try {
-    const res = await fetch(API_BASE + "/api/advisor/analyze", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    document.getElementById("advisorText").value = data.answer || JSON.stringify(data, null, 2);
-  } catch (e) {
-    document.getElementById("advisorText").value = "Error llamando Advisor: " + e.message;
-  }
-}
-
-async function copyAdvisor() {
-  const text = document.getElementById("advisorText").value;
-  await navigator.clipboard.writeText(text);
-  alert("Copiado.");
-}
-
-checkApi();
-render();
+const API_BASE="http://127.0.0.1:8000",STORAGE_KEY="con-war-room-games-v06",OLD_KEY="con-war-room-games-v05",SETTINGS_KEY="con-war-room-settings-v06";let selectedId=null,liveEnabled=true,tickSeconds=1,autoSnapshotMinutes=5,lastAutoSnapshotAt=0,captureStream=null,captureTimer=null,radarDeg=0;
+const resourceMeta={supplies:{label:"Supplies",icon:"📦",target:5000},components:{label:"Components",icon:"⚙️",target:4500},fuel:{label:"Fuel",icon:"⛽",target:3500},electronics:{label:"Electronics",icon:"🔌",target:2500},rares:{label:"Rares",icon:"💎",target:1800},manpower:{label:"Manpower",icon:"🪖",target:3000},money:{label:"Money",icon:"💵",target:20000}};
+function nowIso(){return new Date().toISOString()}function nowMs(){return Date.now()}function clamp(n,a,b){return Math.max(a,Math.min(b,n))}
+function baseGame(id,name,country){return{id,name,country,phase:"early expansion",day:1,victory_points:"0 / 5920",coalition:[],resources:{supplies:{value:0,hour:0,status:"stable"},components:{value:0,hour:0,status:"stable"},fuel:{value:0,hour:0,status:"critical"},electronics:{value:0,hour:0,status:"low"},rares:{value:0,hour:0,status:"critical"},manpower:{value:0,hour:0,status:"stable"},money:{value:0,hour:0,status:"stable"}},fronts:[{name:"Frente 1",state:"pendiente",risk:"medium",action:"actualizar"}],research:[],notes:"",snapshots:[],feed:[],updated_at:nowIso(),live_base_at:nowIso()}}
+function sampleGame(id,name,country,day,vp){const g=baseGame(id,name,country);g.day=day;g.victory_points=vp;if(id==="colombia-main"){g.coalition=["Venezuela","USA","Canada","Bolivia"];g.resources={supplies:{value:7079,hour:91,status:"stable"},components:{value:5474,hour:45,status:"stable"},fuel:{value:345,hour:50,status:"critical"},electronics:{value:719,hour:49,status:"low"},rares:{value:84,hour:34,status:"critical"},manpower:{value:3557,hour:48,status:"stable"},money:{value:32968,hour:382,status:"stable"}};g.fronts=[{name:"Panama",state:"occupied",risk:"medium",action:"keep garrison"},{name:"Ecuador / Quito",state:"active offensive",risk:"high",action:"finish and stabilize"},{name:"Peru",state:"next possible target",risk:"medium",action:"do not attack yet"},{name:"Caribbean",state:"naval watch",risk:"medium",action:"prepare frigates"}];g.research=["Radar movil","Antiaereo movil / SAM","Fragata","Railgun","Satelite","Submarino elite"];g.notes="Base inicial. Ajustar con datos reales de cada partida."}return g}
+function seedGames(){const existing=localStorage.getItem(OLD_KEY);if(existing){try{const old=JSON.parse(existing).map(normalizeGame);localStorage.setItem(STORAGE_KEY,JSON.stringify(old));return old}catch{}}return[sampleGame("colombia-main","Colombia Principal","Colombia",2,"432 / 5920"),sampleGame("slot-2","Partida 2","Pendiente",1,"0 / 5920"),sampleGame("slot-3","Partida 3","Pendiente",1,"0 / 5920"),sampleGame("slot-4","Partida 4","Pendiente",1,"0 / 5920")]}
+function normalizeGame(g){const b=baseGame(g.id||("game-"+nowMs()),g.name||"Partida",g.country||"Pais"),out={...b,...g};out.resources={...b.resources,...(g.resources||{})};out.fronts=g.fronts||b.fronts;out.research=g.research||[];out.snapshots=g.snapshots||[];out.feed=g.feed||[];out.live_base_at=g.live_base_at||g.updated_at||nowIso();out.phase=g.phase||"early expansion";return out}
+function getGames(){const raw=localStorage.getItem(STORAGE_KEY);if(!raw){const seeded=seedGames();localStorage.setItem(STORAGE_KEY,JSON.stringify(seeded));selectedId=seeded[0].id;return seeded}return JSON.parse(raw).map(normalizeGame)}function saveGames(g){localStorage.setItem(STORAGE_KEY,JSON.stringify(g))}
+function loadSettings(){const raw=localStorage.getItem(SETTINGS_KEY),s=raw?JSON.parse(raw):{tickSeconds:1,autoSnapshotMinutes:5,liveEnabled:true};tickSeconds=Number(s.tickSeconds||1);autoSnapshotMinutes=Number(s.autoSnapshotMinutes||5);liveEnabled=s.liveEnabled!==false;document.getElementById("tickSeconds").value=tickSeconds;document.getElementById("snapMinutes").value=autoSnapshotMinutes;document.getElementById("liveBtn").textContent=liveEnabled?"Live ON":"Live OFF";document.getElementById("liveState").textContent=liveEnabled?"running":"paused"}function saveSettings(){localStorage.setItem(SETTINGS_KEY,JSON.stringify({tickSeconds,autoSnapshotMinutes,liveEnabled}));addFeed("Settings guardados")}
+function selectedGame(){const games=getGames();if(!selectedId)selectedId=games[0]?.id;return games.find(g=>g.id===selectedId)||games[0]}function replaceSelected(game,doRender=true){const games=getGames(),idx=games.findIndex(g=>g.id===game.id);game.updated_at=nowIso();if(idx>=0)games[idx]=game;saveGames(games);if(doRender)render()}
+function deriveStatus(k,v){const target=resourceMeta[k]?.target||1000;if(v<target*.25)return"critical";if(v<target*.55)return"low";return"stable"}function statusClass(s){return s==="critical"?"critical":s==="low"?"low":"stable"}
+function applyLiveAccrual(game){if(!liveEnabled)return game;const last=new Date(game.live_base_at||game.updated_at||nowIso()).getTime(),diff=Math.max(0,(nowMs()-last)/1000);if(diff<1)return game;Object.entries(game.resources||{}).forEach(([k,r])=>{const inc=Number(r.hour||0)*diff/3600;r.value=Math.round((Number(r.value||0)+inc)*100)/100;r.status=deriveStatus(k,r.value)});game.live_base_at=nowIso();return game}
+function updateAllGamesLive(){saveGames(getGames().map(g=>applyLiveAccrual(g)))}async function checkApi(){try{const r=await fetch(API_BASE+"/health",{cache:"no-store"}),d=await r.json();status.textContent="API: "+d.status.toUpperCase();status.style.color="var(--green)"}catch{status.textContent="API: OFFLINE";status.style.color="var(--red)"}}
+function readinessScore(g){let score=100;Object.values(g.resources||{}).forEach(r=>{if(r.status==="critical")score-=13;if(r.status==="low")score-=6});(g.fronts||[]).forEach(f=>{if(f.risk==="critical")score-=18;if(f.risk==="high")score-=10;if(f.risk==="medium")score-=4});return clamp(score,0,100)}function etaCritical(g){for(const[k,r]of Object.entries(g.resources||{})){const target=(resourceMeta[k]?.target||1000)*.55;if(Number(r.value||0)<target)return k+" bajo"}return"OK"}
+function renderGameList(){const games=getGames();gameCount.textContent=games.length+" partidas";gameList.innerHTML="";games.forEach(g=>{const b=document.createElement("button");b.className="game-btn"+(g.id===selectedId?" active":"");b.innerHTML=`<strong>${g.name}</strong><span>${g.country} · Día ${g.day} · ${g.victory_points} · ${readinessScore(g)}% ready</span>`;b.onclick=()=>{selectedId=g.id;render()};gameList.appendChild(b)})}
+function renderMetrics(g){mName.textContent=g.name;mCountry.textContent=g.country;mDay.textContent=g.day;mVP.textContent=g.victory_points;mReadiness.textContent=readinessScore(g)+"%";mCriticalEta.textContent=etaCritical(g);lastUpdate.textContent="update "+new Date(g.updated_at).toLocaleTimeString();snapCount.textContent=(g.snapshots||[]).length+" snapshots";name.value=g.name;country.value=g.country;day.value=g.day;vp.value=g.victory_points;coalition.value=(g.coalition||[]).join(", ");phase.value=g.phase||"early expansion";frontsJson.value=JSON.stringify(g.fronts||[],null,2);research.value=(g.research||[]).join(", ");notes.value=g.notes||""}
+function renderResources(g){resources.innerHTML="";Object.entries(resourceMeta).forEach(([k,m])=>{const r=g.resources[k]||{value:0,hour:0,status:"stable"},pct=clamp((Number(r.value||0)/m.target)*100,3,100),div=document.createElement("div");div.className="resource "+statusClass(r.status);div.innerHTML=`<div class="res-head"><div class="res-name"><span class="resicon">${m.icon}</span>${m.label}</div><span class="${statusClass(r.status)}">${r.status}</span></div><div class="grid3"><div class="field"><label>Stock live</label><input type="number" value="${Math.round(Number(r.value||0))}" onchange="updateResource('${k}','value',Number(this.value))"></div><div class="field"><label>Hora</label><input type="number" value="${r.hour}" onchange="updateResource('${k}','hour',Number(this.value))"></div><div class="field"><label>Status</label><select onchange="updateResource('${k}','status',this.value)"><option ${r.status==="stable"?"selected":""}>stable</option><option ${r.status==="low"?"selected":""}>low</option><option ${r.status==="critical"?"selected":""}>critical</option></select></div></div><div class="bar"><i style="width:${pct}%"></i></div><div class="sub">target táctico: ${m.target} · live tick por producción/hora</div>`;resources.appendChild(div)})}
+function renderFronts(g){frontList.innerHTML="";const fronts=g.fronts||[];riskText.textContent=fronts.filter(f=>["high","critical"].includes(f.risk)).length+" high risk";fronts.forEach(f=>{const d=document.createElement("div");d.className="front";d.innerHTML=`<strong>${f.name}</strong><div class="sub">${f.state} — ${f.action}</div><span class="tag">${f.risk}</span>`;frontList.appendChild(d)})}
+function renderSnapshots(g){snapshots.innerHTML="";(g.snapshots||[]).slice().reverse().slice(0,10).forEach(s=>{const d=document.createElement("div");d.className="snapshot";d.innerHTML=`<strong>${new Date(s.time).toLocaleString()}</strong><br>Día ${s.day} · VP ${s.victory_points}<br>Fuel ${Math.round(s.resources?.fuel?.value??0)} · Raros ${Math.round(s.resources?.rares?.value??0)} · Score ${s.readiness??"--"}%`;snapshots.appendChild(d)})}
+function renderFeed(g){feed.innerHTML="";(g.feed||[]).slice().reverse().slice(0,12).forEach(i=>{const d=document.createElement("div");d.className="feed-item "+(i.level||"");d.innerHTML=`<strong>${new Date(i.time).toLocaleTimeString()}</strong><br>${i.text}`;feed.appendChild(d)})}
+function drawLineChart(c,g){const ctx=c.getContext("2d"),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="rgba(0,0,0,.12)";ctx.fillRect(0,0,w,h);const snaps=(g.snapshots||[]).slice(-12),series=["fuel","rares","electronics","components"],colors={fuel:"#ffcc66",rares:"#bf7dff",electronics:"#36d9ff",components:"#3dff9b"};ctx.strokeStyle="rgba(54,217,255,.16)";for(let i=1;i<5;i++){ctx.beginPath();ctx.moveTo(0,h*i/5);ctx.lineTo(w,h*i/5);ctx.stroke()}if(snaps.length<2){ctx.fillStyle="#7f9eb2";ctx.font="22px Segoe UI";ctx.fillText("Guarda snapshots para ver histórico",30,55);return}const max=Math.max(...snaps.flatMap(s=>series.map(k=>Number(s.resources?.[k]?.value||0))),1);series.forEach(k=>{ctx.strokeStyle=colors[k];ctx.lineWidth=3;ctx.beginPath();snaps.forEach((s,i)=>{const x=30+i*((w-60)/(snaps.length-1)),y=h-28-(Number(s.resources?.[k]?.value||0)/max*(h-65));if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();ctx.fillStyle=colors[k];ctx.fillText(k,30+series.indexOf(k)*120,24)})}
+function drawBarChart(c,g){const ctx=c.getContext("2d"),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);const entries=Object.entries(resourceMeta),vals=entries.map(([k])=>Math.abs(Number(g.resources?.[k]?.hour||0))),max=Math.max(...vals,1);entries.forEach(([k,m],i)=>{const x=25+i*((w-50)/entries.length),bw=Math.max(28,((w-70)/entries.length)-12),val=Number(g.resources?.[k]?.hour||0),bh=Math.abs(val)/max*(h-70),y=h-35-bh;ctx.fillStyle=val>=0?"rgba(61,255,155,.75)":"rgba(255,77,95,.75)";ctx.fillRect(x,y,bw,bh);ctx.fillStyle="#d8f3ff";ctx.font="18px Segoe UI";ctx.fillText(m.icon,x+5,h-10);ctx.fillStyle="#7f9eb2";ctx.font="12px Segoe UI";ctx.fillText(String(val),x,y-7)})}
+function renderCharts(g){drawLineChart(stockChart,g);drawBarChart(prodChart,g)}function render(){const games=getGames();if(!selectedId)selectedId=games[0].id;const g=selectedGame();renderGameList();renderMetrics(g);renderResources(g);renderFronts(g);renderSnapshots(g);renderFeed(g);renderCharts(g)}
+function updateField(f,v){const g=selectedGame();g[f]=v;replaceSelected(g)}function updateCoalition(v){const g=selectedGame();g.coalition=v.split(",").map(x=>x.trim()).filter(Boolean);replaceSelected(g)}function updateResearch(v){const g=selectedGame();g.research=v.split(",").map(x=>x.trim()).filter(Boolean);replaceSelected(g)}function updateFronts(v){const g=selectedGame();try{g.fronts=JSON.parse(v);replaceSelected(g)}catch{}}
+function updateResource(k,p,v){const g=selectedGame();if(!g.resources[k])g.resources[k]={};g.resources[k][p]=v;if(p!=="status")g.resources[k].status=deriveStatus(k,Number(g.resources[k].value||0));g.live_base_at=nowIso();replaceSelected(g)}
+function createGame(){const games=getGames(),id="game-"+nowMs(),g=baseGame(id,"Nueva partida","Pais");games.push(g);selectedId=id;saveGames(games);render()}function deleteGame(){let games=getGames();if(games.length<=1)return alert("Debe quedar al menos una partida.");const g=selectedGame();if(!confirm("Borrar partida: "+g.name+"?"))return;games=games.filter(x=>x.id!==g.id);selectedId=games[0].id;saveGames(games);render()}
+function snapshotObject(g){return{time:nowIso(),day:g.day,victory_points:g.victory_points,resources:JSON.parse(JSON.stringify(g.resources)),fronts:JSON.parse(JSON.stringify(g.fronts||[])),research:JSON.parse(JSON.stringify(g.research||[])),readiness:readinessScore(g)}}function manualSnapshot(){const g=selectedGame();g.snapshots=g.snapshots||[];g.snapshots.push(snapshotObject(g));addFeed("Snapshot manual guardado","info",g);replaceSelected(g)}
+function autoSnapshotIfNeeded(){if(!liveEnabled)return;const ms=autoSnapshotMinutes*60*1000;if(nowMs()-lastAutoSnapshotAt<ms)return;lastAutoSnapshotAt=nowMs();const g=selectedGame();g.snapshots=g.snapshots||[];g.snapshots.push(snapshotObject(g));addFeed("Auto snapshot guardado","info",g);replaceSelected(g,false)}function addFeed(text,level="info",game=null){const g=game||selectedGame();g.feed=g.feed||[];g.feed.push({time:nowIso(),text,level});if(g.feed.length>80)g.feed=g.feed.slice(-80);replaceSelected(g,false)}
+async function askAdvisor(){const g=selectedGame(),body={game_state:g,question:"Analiza esta partida seleccionada y dime que hacer en las proximas 6-12 horas. Prioriza economia, investigacion, expansion, defensa, diplomacia, frentes y uso de elites."};try{const res=await fetch(API_BASE+"/api/advisor/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}),data=await res.json();advisorText.value=data.answer||JSON.stringify(data,null,2);addFeed("Advisor generado para "+g.name);render()}catch(e){advisorText.value="Error llamando Advisor: "+e.message}}async function copyAdvisor(){await navigator.clipboard.writeText(advisorText.value);addFeed("Advisor copiado");render()}
+function exportGames(){importExportBox.value=JSON.stringify(getGames(),null,2)}function importGames(){try{const parsed=JSON.parse(importExportBox.value);if(!Array.isArray(parsed))throw new Error("Debe ser array de partidas");saveGames(parsed.map(normalizeGame));selectedId=parsed[0]?.id;render();addFeed("Import JSON completado")}catch(e){alert("Import falló: "+e.message)}}function resetLocal(){if(!confirm("Esto borra datos locales v0.6. ¿Continuar?"))return;localStorage.removeItem(STORAGE_KEY);selectedId=null;render()}
+function toggleLive(){liveEnabled=!liveEnabled;liveBtn.textContent=liveEnabled?"Live ON":"Live OFF";liveState.textContent=liveEnabled?"running":"paused";saveSettings()}function setTickSeconds(n){tickSeconds=clamp(n||1,1,60);saveSettings()}function setAutoSnapshotMinutes(n){autoSnapshotMinutes=clamp(n||5,1,120);saveSettings()}
+async function startCapture(){try{captureStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});const v=captureVideo;v.srcObject=captureStream;v.style.display="block";captureState.textContent="capturing";addFeed("Captura iniciada. OCR pendiente v0.7.");captureTimer=setInterval(sampleCaptureFrame,3000)}catch(e){captureState.textContent="denied/offline";addFeed("Captura no iniciada: "+e.message,"warn");render()}}function stopCapture(){if(captureStream)captureStream.getTracks().forEach(t=>t.stop());captureStream=null;if(captureTimer)clearInterval(captureTimer);captureState.textContent="offline"}function sampleCaptureFrame(){const v=captureVideo,c=captureCanvas,ctx=c.getContext("2d");if(!v.videoWidth)return;ctx.drawImage(v,0,0,c.width,c.height);addFeed("Frame capturado en memoria. Preparado para OCR.");render()}
+function liveLoop(){liveClock.textContent=new Date().toLocaleTimeString();radarDeg=(radarDeg+8)%360;radar.style.setProperty("--radarDeg",radarDeg+"deg");updateAllGamesLive();autoSnapshotIfNeeded();const g=selectedGame(),crit=Object.entries(g.resources||{}).filter(([k,r])=>r.status==="critical").map(([k])=>k);economyTick.textContent=crit.length?"critical: "+crit.join(", "):"stable";render()}function boot(){loadSettings();checkApi();render();setInterval(checkApi,5000);setInterval(liveLoop,1000)}boot();
 </script>
 </body>
 </html>
