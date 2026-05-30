@@ -59,6 +59,7 @@ function App() {
   const [markLabel, setMarkLabel] = useState("objetivo");
   const [ocrText, setOcrText] = useState("");
   const [ocrNumbers, setOcrNumbers] = useState([]);
+  const [segmentedOcr, setSegmentedOcr] = useState([]);
   const [ocrBusy, setOcrBusy] = useState(false);
   const [ocrCrop, setOcrCrop] = useState({ x: 34, y: 0, w: 60, h: 12, threshold: 95, scale: 4 });
 
@@ -137,6 +138,113 @@ function App() {
       resources[key] = { ...resources[key], value, status: deriveStatus(key, value) };
     });
     replaceSelected(addFeed({ ...selected, resources, live_base_at: nowIso() }, "OCR aplicado a recursos", "info"));
+  }
+
+  async function runSegmentedOcr() {
+    const src = canvasRef.current;
+    if (!src) return;
+
+    setOcrBusy(true);
+    try {
+      const Tesseract = await import("tesseract.js");
+      const sx = Math.round(src.width * (ocrCrop.x / 100));
+      const sy = Math.round(src.height * (ocrCrop.y / 100));
+      const sw = Math.round(src.width * (ocrCrop.w / 100));
+      const sh = Math.round(src.height * (ocrCrop.h / 100));
+
+      const results = [];
+
+      for (let i = 0; i < RESOURCE_KEYS.length; i++) {
+        const key = RESOURCE_KEYS[i];
+        const meta = RESOURCE_META[key];
+
+        const segCanvas = document.createElement("canvas");
+        const segW = Math.round(sw / RESOURCE_KEYS.length);
+        const padding = Math.round(segW * 0.05);
+        const realSx = sx + (i * segW) + padding;
+        const realSw = Math.max(10, segW - (padding * 2));
+
+        segCanvas.width = Math.max(260, realSw * Number(ocrCrop.scale || 5));
+        segCanvas.height = Math.max(140, sh * Number(ocrCrop.scale || 5));
+
+        const ctx = segCanvas.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, segCanvas.width, segCanvas.height);
+        ctx.drawImage(src, realSx, sy, realSw, sh, 0, 0, segCanvas.width, segCanvas.height);
+
+        const img = ctx.getImageData(0, 0, segCanvas.width, segCanvas.height);
+        const threshold = Number(ocrCrop.threshold || 110);
+
+        for (let p = 0; p < img.data.length; p += 4) {
+          const r = img.data[p];
+          const g = img.data[p + 1];
+          const b = img.data[p + 2];
+          const brightness = (r + g + b) / 3;
+          const greenBoost = g > r + 10 && g > b + 10 ? 45 : 0;
+          const whiteBoost = r > 150 && g > 150 && b > 150 ? 35 : 0;
+          const v = brightness + greenBoost + whiteBoost > threshold ? 255 : 0;
+          img.data[p] = v;
+          img.data[p + 1] = v;
+          img.data[p + 2] = v;
+        }
+
+        ctx.putImageData(img, 0, 0);
+
+        const ocr = await Tesseract.recognize(segCanvas, "eng", {
+          tessedit_char_whitelist: "0123456789,+/h ",
+          preserve_interword_spaces: "1"
+        });
+
+        const text = ocr?.data?.text || "";
+        const nums = parseOcrNumbers(text);
+        const stock = nums[0] ?? null;
+        const hour = nums[1] ?? null;
+
+        results.push({
+          key,
+          label: meta.label,
+          text,
+          nums,
+          stock,
+          hour
+        });
+      }
+
+      setSegmentedOcr(results);
+      setOcrText(results.map(r => `${r.label}: ${r.text.replace(/\s+/g, " ").trim()} => ${r.nums.join(" / ")}`).join("\n"));
+      setOcrNumbers(results.map(r => r.stock).filter(n => n !== null));
+    } catch (e) {
+      setOcrText(`Segmented OCR error: ${e.message}`);
+    }
+    setOcrBusy(false);
+  }
+
+  function applySegmentedOcrToResources() {
+    if (!segmentedOcr || segmentedOcr.length < 7) {
+      return alert("Primero ejecuta OCR por cajas.");
+    }
+
+    const resources = { ...selected.resources };
+
+    segmentedOcr.forEach((item) => {
+      if (!item || !item.key) return;
+      const current = resources[item.key] || {};
+      const next = { ...current };
+
+      if (item.stock !== null && item.stock !== undefined) {
+        next.value = Number(item.stock);
+        next.status = deriveStatus(item.key, next.value);
+      }
+
+      if (item.hour !== null && item.hour !== undefined) {
+        next.hour = Number(item.hour);
+      }
+
+      resources[item.key] = next;
+    });
+
+    replaceSelected(addFeed({ ...selected, resources, live_base_at: nowIso() }, "OCR por cajas aplicado a recursos", "info"));
   }
 
   async function startCapture() {
@@ -252,7 +360,7 @@ function App() {
       <main className="main">
         {tab === "command" && <CommandTab selected={selected} patchSelected={patchSelected} updateResource={updateResource} chartData={chartData} prodData={prodData} />}
         {tab === "movement" && <MovementTab selected={selected} patchSelected={patchSelected} askMovement={askMovement} movementPlan={movementPlan} />}
-        {tab === "capture" && <CaptureTab videoRef={videoRef} canvasRef={canvasRef} bigCanvasRef={bigCanvasRef} cropCanvasRef={cropCanvasRef} captureOpen={captureOpen} setCaptureOpen={setCaptureOpen} captureStatus={captureStatus} captureMode={captureMode} setCaptureMode={setCaptureMode} startCapture={startCapture} stopCapture={stopCapture} addMark={addMark} marks={marks} setMarks={setMarks} markLabel={markLabel} setMarkLabel={setMarkLabel} runOcrTopBar={runOcrTopBar} ocrBusy={ocrBusy} ocrText={ocrText} ocrNumbers={ocrNumbers} applyOcrToResources={applyOcrToResources} ocrCrop={ocrCrop} setOcrCrop={setOcrCrop} />}
+        {tab === "capture" && <CaptureTab videoRef={videoRef} canvasRef={canvasRef} bigCanvasRef={bigCanvasRef} cropCanvasRef={cropCanvasRef} captureOpen={captureOpen} setCaptureOpen={setCaptureOpen} captureStatus={captureStatus} captureMode={captureMode} setCaptureMode={setCaptureMode} startCapture={startCapture} stopCapture={stopCapture} addMark={addMark} marks={marks} setMarks={setMarks} markLabel={markLabel} setMarkLabel={setMarkLabel} runOcrTopBar={runOcrTopBar} ocrBusy={ocrBusy} ocrText={ocrText} ocrNumbers={ocrNumbers} applyOcrToResources={applyOcrToResources} ocrCrop={ocrCrop} setOcrCrop={setOcrCrop} segmentedOcr={segmentedOcr} runSegmentedOcr={runSegmentedOcr} applySegmentedOcrToResources={applySegmentedOcrToResources} />}
         {tab === "data" && <DataTab selected={selected} patchSelected={patchSelected} games={games} persist={persist} />}
       </main>
 
@@ -287,7 +395,7 @@ function MovementTab({ selected, patchSelected, askMovement, movementPlan }) {
   return <section className="movementGrid"><Panel title="Movement Assistant"><p className="hint">No ejecuta acciones. Recomienda movimientos, contramedidas y que NO mover.</p><div className="formGrid two"><label>Stacks propios JSON<textarea value={stacks} onChange={e=>setStacks(e.target.value)}/></label><label>Enemigos observados JSON<textarea value={enemy} onChange={e=>setEnemy(e.target.value)}/></label></div><div className="row"><button onClick={save}><Save size={16}/> Guardar</button><button onClick={askMovement}><Target size={16}/> Recomendar movimiento</button></div></Panel><Panel title="Plan de movimiento"><textarea className="advisor" value={movementPlan} readOnly/></Panel><section className="moveCols"><Panel title="Stacks propios">{(selected.stacks||[]).map((s,i)=><MoveCard key={i} item={s}/>)}</Panel><Panel title="Contramedidas">{(selected.enemy||[]).map((e,i)=><MoveCard key={i} item={e}/>)}</Panel></section></section>;
 }
 function MoveCard({ item }) { return <div className="moveCard"><strong>{item.name || item.location}</strong>{Object.entries(item).map(([k,v])=><p key={k}><b>{k}:</b> {String(v)}</p>)}</div>; }
-function CaptureTab({ videoRef, canvasRef, bigCanvasRef, cropCanvasRef, captureOpen, setCaptureOpen, captureStatus, captureMode, setCaptureMode, startCapture, stopCapture, addMark, marks, setMarks, markLabel, setMarkLabel, runOcrTopBar, ocrBusy, ocrText, ocrNumbers, applyOcrToResources, ocrCrop, setOcrCrop }) {
+function CaptureTab({ videoRef, canvasRef, bigCanvasRef, cropCanvasRef, captureOpen, setCaptureOpen, captureStatus, captureMode, setCaptureMode, startCapture, stopCapture, addMark, marks, setMarks, markLabel, setMarkLabel, runOcrTopBar, ocrBusy, ocrText, ocrNumbers, applyOcrToResources, ocrCrop, setOcrCrop, segmentedOcr, runSegmentedOcr, applySegmentedOcrToResources }) {
   return <section className="capturePage"><Panel title="Capture Center + OCR" right={captureStatus}><video ref={videoRef} className="hiddenVideo"/><div className="captureStage" onPointerDown={addMark}><canvas ref={canvasRef} width="1280" height="720" className="captureCanvas"/><div className="ocrBoxOverlay" style={{ left: `${ocrCrop.x}%`, top: `${ocrCrop.y}%`, width: `${ocrCrop.w}%`, height: `${ocrCrop.h}%` }}><span>OCR TOP BAR</span></div>{marks.map((m,i)=><div className="captureMark" key={i} style={{left:`${m.x}%`,top:`${m.y}%`}}><span>{i+1}</span><em>{m.label}</em></div>)}</div><div className="row"><input className="markInput" value={markLabel} onChange={e=>setMarkLabel(e.target.value)} placeholder="texto del marcador"/><button onClick={startCapture}><Video size={16}/> Conectar pantalla</button><button onClick={()=>setCaptureOpen(true)}><Eye size={16}/> Ampliar</button><button onClick={()=>setCaptureMode(captureMode==="fit"?"fill":"fit")}>Modo {captureMode}</button><button onClick={()=>setMarks([])}>Limpiar marcas</button><button className="danger" onClick={stopCapture}>Parar</button></div><p className="hint">Click sobre la captura crea marcador tactico. Captura observa, no controla el juego.</p></Panel><Panel title="OCR Top Bar Calibrator">
   <div className="ocrControls">
     <label>X %<input type="range" min="0" max="100" value={ocrCrop.x} onChange={e=>setOcrCrop({...ocrCrop, x:Number(e.target.value)})}/><b>{ocrCrop.x}</b></label>
@@ -303,9 +411,19 @@ function CaptureTab({ videoRef, canvasRef, bigCanvasRef, cropCanvasRef, captureO
     <button onClick={()=>setOcrCrop({ x: 38, y: 0, w: 58, h: 9, threshold: 120, scale: 5 })}>Preset recursos</button>
   </div>
   <canvas ref={cropCanvasRef} width="1600" height="190" className="ocrCrop"/>
-  <div className="row"><button onClick={runOcrTopBar} disabled={ocrBusy}>{ocrBusy ? "OCR..." : "Leer zona OCR"}</button><button onClick={applyOcrToResources}>Aplicar OCR a recursos</button></div>
+  <div className="row"><button onClick={runOcrTopBar} disabled={ocrBusy}>{ocrBusy ? "OCR..." : "Leer zona OCR"}</button><button onClick={runSegmentedOcr} disabled={ocrBusy}>{ocrBusy ? "OCR..." : "Leer por cajas"}</button><button onClick={applyOcrToResources}>Aplicar OCR simple</button><button onClick={applySegmentedOcrToResources}>Aplicar OCR por cajas</button></div>
   <p className="hint">Numeros detectados: {ocrNumbers.join(" / ") || "sin datos"}</p>
   <p className="hint">Tip: mueve X/Y/W/H hasta que el recorte muestre solo la barra de recursos, sin panel izquierdo ni mapa.</p>
+  <div className="segmentedOcrGrid">
+    {(segmentedOcr || []).map((r) => (
+      <div className="segOcrCard" key={r.key}>
+        <strong>{r.label}</strong>
+        <span>Stock: {r.stock ?? "?"}</span>
+        <span>Hora: {r.hour ?? "?"}</span>
+        <small>{(r.text || "").replace(/\s+/g, " ").slice(0, 80)}</small>
+      </div>
+    ))}
+  </div>
   <textarea className="ocrText" value={ocrText} onChange={e=>{}} readOnly/>
 </Panel>{captureOpen && <div className="captureModal"><div className="captureModalTop"><strong>LIVE GAME FEED</strong><div className="row"><button onClick={()=>setCaptureMode(captureMode==="fit"?"fill":"fit")}>Modo {captureMode}</button><button className="danger" onClick={()=>setCaptureOpen(false)}>Cerrar</button></div></div><div className="captureBigStage" onPointerDown={addMark}><canvas ref={bigCanvasRef} width="1920" height="1080" className="captureBig"/>{marks.map((m,i)=><div className="captureMark big" key={i} style={{left:`${m.x}%`,top:`${m.y}%`}}><span>{i+1}</span><em>{m.label}</em></div>)}</div></div>}</section>;
 }
