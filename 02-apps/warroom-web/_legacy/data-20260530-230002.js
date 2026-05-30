@@ -1,5 +1,3 @@
-export const RESOURCE_KEYS = ["supplies", "components", "fuel", "electronics", "rares", "manpower", "money"];
-
 export const RESOURCE_META = {
   supplies: { label: "Supplies", short: "SUP", img: "/assets/resources/supplies.svg", target: 5000 },
   components: { label: "Components", short: "CMP", img: "/assets/resources/components.svg", target: 4500 },
@@ -10,16 +8,8 @@ export const RESOURCE_META = {
   money: { label: "Money", short: "MON", img: "/assets/resources/money.svg", target: 20000 }
 };
 
-export const STORAGE_KEY = "con-war-room-games-v09";
+export const STORAGE_KEY = "con-war-room-games-v08";
 export const API_BASE = "http://127.0.0.1:8000";
-
-export function deriveStatus(key, value) {
-  const target = RESOURCE_META[key]?.target || 1000;
-  const n = Number(value || 0);
-  if (n < target * 0.25) return "critical";
-  if (n < target * 0.55) return "low";
-  return "stable";
-}
 
 export function baseGame(id, name, country) {
   return {
@@ -30,13 +20,36 @@ export function baseGame(id, name, country) {
     victory_points: "0 / 5920",
     phase: "early expansion",
     coalition: [],
-    resources: Object.fromEntries(RESOURCE_KEYS.map(k => [k, { value: 0, hour: 0, status: "critical" }])),
-    fronts: [{ name: "Frente 1", state: "pendiente", risk: "medium", action: "actualizar" }],
+    resources: {
+      supplies: { value: 0, hour: 0, status: "critical" },
+      components: { value: 0, hour: 0, status: "critical" },
+      fuel: { value: 0, hour: 0, status: "critical" },
+      electronics: { value: 0, hour: 0, status: "critical" },
+      rares: { value: 0, hour: 0, status: "critical" },
+      manpower: { value: 0, hour: 0, status: "critical" },
+      money: { value: 0, hour: 0, status: "critical" }
+    },
+    fronts: [
+      { name: "Frente 1", state: "pendiente", risk: "medium", action: "actualizar" }
+    ],
     stacks: [
-      { name: "Stack principal", location: "capital / frente", units: "infanteria + recon", mission: "defensa", condition: "100%", threat: "medium", order: "mantener" }
+      {
+        name: "Stack principal",
+        location: "capital / frente",
+        units: "infanteria, recon",
+        mission: "defensa",
+        condition: "100%",
+        threat: "medium",
+        notes: "actualizar manualmente"
+      }
     ],
     enemy: [
-      { location: "frente enemigo", observed: "desconocido", risk: "medium", counter: "recon + radar antes de atacar" }
+      {
+        location: "frente enemigo",
+        observed: "infanteria / desconocido",
+        risk: "medium",
+        counter: "recon + artilleria + cobertura aerea"
+      }
     ],
     research: [],
     notes: "",
@@ -68,15 +81,41 @@ export function seedGames() {
     { name: "Caribe", state: "vigilancia naval", risk: "medium", action: "preparar fragatas" }
   ];
   g.stacks = [
-    { name: "Grupo Quito", location: "Ecuador / Quito", units: "infanteria + recon", mission: "tomar ciudad", condition: "70%", threat: "high", order: "avanzar con cautela" },
-    { name: "Guarnicion Panama", location: "Panama", units: "infanteria", mission: "control urbano", condition: "100%", threat: "medium", order: "mantener" }
+    { name: "Grupo Quito", location: "Ecuador/Quito", units: "infanteria + recon", mission: "tomar capital", condition: "70%", threat: "high", notes: "no sobreextender" },
+    { name: "Guarnicion Panama", location: "Panama", units: "infanteria", mission: "control urbano", condition: "100%", threat: "medium", notes: "evitar insurgencia" }
   ];
   g.enemy = [
     { location: "Quito", observed: "defensa urbana probable", risk: "high", counter: "rodear, esperar organizacion, no entrar con unidades danadas" },
     { location: "Caribe", observed: "naval desconocido", risk: "medium", counter: "radar + fragatas; no enviar transporte solo" }
   ];
   g.research = ["Radar movil", "Antiaereo movil/SAM", "Fragata", "Railgun", "Satelite", "Submarino elite"];
-  return [g, baseGame("slot-2", "Partida 2", "Pendiente"), baseGame("slot-3", "Partida 3", "Pendiente"), baseGame("slot-4", "Partida 4", "Pendiente")];
+  return [
+    g,
+    baseGame("slot-2", "Partida 2", "Pendiente"),
+    baseGame("slot-3", "Partida 3", "Pendiente"),
+    baseGame("slot-4", "Partida 4", "Pendiente")
+  ];
+}
+
+export function deriveStatus(key, value) {
+  const target = RESOURCE_META[key]?.target || 1000;
+  if (Number(value || 0) < target * 0.25) return "critical";
+  if (Number(value || 0) < target * 0.55) return "low";
+  return "stable";
+}
+
+export function readinessScore(game) {
+  let score = 100;
+  Object.values(game.resources || {}).forEach((r) => {
+    if (r.status === "critical") score -= 12;
+    if (r.status === "low") score -= 6;
+  });
+  (game.fronts || []).forEach((f) => {
+    if (f.risk === "critical") score -= 18;
+    if (f.risk === "high") score -= 10;
+    if (f.risk === "medium") score -= 4;
+  });
+  return Math.max(0, Math.min(100, score));
 }
 
 export function normalizeGame(game) {
@@ -92,18 +131,4 @@ export function normalizeGame(game) {
     snapshots: game.snapshots || [],
     feed: game.feed || []
   };
-}
-
-export function readinessScore(game) {
-  let score = 100;
-  Object.values(game.resources || {}).forEach(r => {
-    if (r.status === "critical") score -= 12;
-    if (r.status === "low") score -= 6;
-  });
-  (game.fronts || []).forEach(f => {
-    if (f.risk === "critical") score -= 18;
-    if (f.risk === "high") score -= 10;
-    if (f.risk === "medium") score -= 4;
-  });
-  return Math.max(0, Math.min(100, score));
 }

@@ -1,20 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
   <defs>
-    <radialGradient id="g" cx="35%" cy="25%" r="70%">
-      <stop offset="0%" stop-color="#36d9ff" stop-opacity="0.95"/>
-      <stop offset="55%" stop-color="#0b5f78" stop-opacity="0.95"/>
+    <radialGradient id="bg" cx="35%" cy="25%" r="80%">
+      <stop offset="0%" stop-color="#53ecff" stop-opacity="1"/>
+      <stop offset="55%" stop-color="#09566b" stop-opacity="1"/>
       <stop offset="100%" stop-color="#02050b" stop-opacity="1"/>
     </radialGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="2.5" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   </defs>
-  <rect x="7" y="7" width="82" height="82" rx="18" fill="url(#g)" stroke="#36d9ff" stroke-width="2"/>
-  <circle cx="48" cy="35" r="19" fill="#07111d" stroke="#3dff9b" stroke-width="2" opacity="0.85"/>
-  <text x="48" y="42" text-anchor="middle" font-size="18" font-family="Consolas, monospace" font-weight="900" fill="#d8f3ff" filter="url(#glow)">RAR</text>
-  <text x="48" y="72" text-anchor="middle" font-size="10" font-family="Consolas, monospace" font-weight="800" fill="#8fb4c7">RARES</text>
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="url(#bg)" stroke="#36d9ff" stroke-width="3"/>
+  <circle cx="64" cy="52" r="30" fill="#07111d" stroke="#3dff9b" stroke-width="3" opacity=".92"/>
+  <path d="M42 52l12-16h20l12 16-22 37z" fill="none" stroke="#d8f3ff" stroke-width="5" stroke-linejoin="round"/><path d="M42 52h44 M54 36l10 16 10-16 M64 52v37" stroke="#3dff9b" stroke-width="4"/>
+  <text x="64" y="106" text-anchor="middle" font-size="13" font-family="Consolas, monospace" font-weight="900" fill="#d8f3ff">RARES</text>
 </svg>
