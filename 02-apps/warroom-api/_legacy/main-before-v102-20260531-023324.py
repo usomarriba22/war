@@ -5,39 +5,11 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 import json, re
 
-app = FastAPI(title="CON War Room API", version="1.0.2")
+app = FastAPI(title="CON War Room API", version="1.0.1")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 TELEMETRY_EVENTS: List[dict] = []
 LATEST_RESOURCES: Dict[str, dict] = {}
-
-NOISE_DOMAINS = [
-    "google-analytics.com",
-    "region1.google-analytics.com",
-    "www.google-analytics.com",
-    "www.google.com",
-    "google.com",
-    "googletagmanager.com",
-    "pixel-config.reddit.com",
-    "reddit.com",
-    "s.yimg.com",
-    "yimg.com",
-    "doubleclick.net",
-    "facebook.com",
-    "bing.com"
-]
-
-def event_domain(event: dict) -> str:
-    network = event.get("network") or {}
-    url = network.get("request_url") or network.get("frame_url") or event.get("url") or ""
-    try:
-        return urlparse(url).netloc.lower()
-    except Exception:
-        return ""
-
-def is_noise_event(event: dict) -> bool:
-    domain = event_domain(event)
-    return any(noise in domain for noise in NOISE_DOMAINS)
 
 RESOURCE_ALIASES = {
     "supplies": ["supplies", "supply", "sup", "suministros"],
@@ -69,11 +41,11 @@ class TelemetryPayload(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "warroom-api", "version": "1.0.2", "time": datetime.now(timezone.utc).isoformat()}
+    return {"status": "ok", "service": "warroom-api", "version": "1.0.1", "time": datetime.now(timezone.utc).isoformat()}
 
 @app.get("/api/status")
 def status():
-    return {"project": "CON War Room", "phase": "v1.0.2-allframes-game-network", "modules": ["telemetry-extension", "auto-ingest", "advisor", "movement"]}
+    return {"project": "CON War Room", "phase": "v1.0.1-network-websocket-debug", "modules": ["telemetry-extension", "auto-ingest", "advisor", "movement"]}
 
 def safe_number(value: Any):
     if isinstance(value, bool): return None
@@ -268,86 +240,6 @@ def telemetry_network(limit: int = 20):
             "body_preview": body[:1000] if isinstance(body, str) else ""
         })
     return {"network": items[-limit:]}
-
-
-@app.post("/api/telemetry/clear")
-def telemetry_clear():
-    TELEMETRY_EVENTS.clear()
-    LATEST_RESOURCES.clear()
-    return {"status": "cleared", "time": datetime.now(timezone.utc).isoformat()}
-
-@app.get("/api/telemetry/domains")
-def telemetry_domains(limit: int = 300):
-    limit = max(1, min(limit, 1000))
-    recent = TELEMETRY_EVENTS[-limit:]
-    domains = {}
-    kinds = {}
-
-    for event in recent:
-        domain = event_domain(event) or "unknown"
-        domains[domain] = domains.get(domain, 0) + 1
-
-        network = event.get("network") or {}
-        kind = network.get("kind") or event.get("reason") or "unknown"
-        kinds[kind] = kinds.get(kind, 0) + 1
-
-    return {
-        "total_stored": len(TELEMETRY_EVENTS),
-        "checked": len(recent),
-        "domains": dict(sorted(domains.items(), key=lambda x: x[1], reverse=True)),
-        "kinds": dict(sorted(kinds.items(), key=lambda x: x[1], reverse=True))
-    }
-
-@app.get("/api/telemetry/game-network")
-def telemetry_game_network(limit: int = 50):
-    limit = max(1, min(limit, 200))
-    items = []
-
-    for event in TELEMETRY_EVENTS:
-        network = event.get("network") or {}
-        if not network:
-            continue
-        if is_noise_event(event):
-            continue
-
-        body = network.get("body") or ""
-        items.append({
-            "received_at": event.get("received_at"),
-            "source": event.get("source"),
-            "kind": network.get("kind"),
-            "domain": event_domain(event),
-            "request_url": network.get("request_url"),
-            "frame_url": network.get("frame_url"),
-            "frame_referrer": network.get("frame_referrer"),
-            "status": network.get("status"),
-            "content_type": network.get("content_type"),
-            "body_length": network.get("body_length") or (len(body) if isinstance(body, str) else 0),
-            "body_preview": body[:1500] if isinstance(body, str) else ""
-        })
-
-    return {"network": items[-limit:], "resources": LATEST_RESOURCES}
-
-@app.get("/api/telemetry/frames")
-def telemetry_frames(limit: int = 100):
-    limit = max(1, min(limit, 300))
-    frames = []
-
-    for event in TELEMETRY_EVENTS:
-        if event.get("source") != "chrome-extension-frame":
-            continue
-        meta = event.get("meta") or {}
-        frames.append({
-            "received_at": event.get("received_at"),
-            "reason": event.get("reason"),
-            "url": event.get("url"),
-            "title": event.get("title"),
-            "referrer": meta.get("referrer"),
-            "top_frame": meta.get("top_frame"),
-            "game_context_score": meta.get("game_context_score"),
-            "element_count": meta.get("element_count")
-        })
-
-    return {"frames": frames[-limit:]}
 
 @app.post("/api/advisor/analyze")
 def advisor(payload: AdvisorRequest):

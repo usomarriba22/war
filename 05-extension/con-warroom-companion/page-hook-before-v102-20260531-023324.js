@@ -1,9 +1,9 @@
 (function () {
-  if (window.__conWarRoomHookedV102) return;
-  window.__conWarRoomHookedV102 = true;
+  if (window.__conWarRoomHookedV101) return;
+  window.__conWarRoomHookedV101 = true;
 
-  const MAX_BODY = 500000;
-  const MAX_EVENTS_PER_MINUTE = 500;
+  const MAX_BODY = 350000;
+  const MAX_EVENTS_PER_MINUTE = 240;
   let eventCounter = 0;
   setInterval(() => { eventCounter = 0; }, 60000);
 
@@ -16,13 +16,13 @@
     try {
       const u = new URL(String(url), location.href);
       for (const key of Array.from(u.searchParams.keys())) {
-        if (/token|auth|session|key|jwt|sid|password|pass|secret|credential|access/i.test(key)) {
+        if (/token|auth|session|key|jwt|sid|password|pass|secret|credential/i.test(key)) {
           u.searchParams.set(key, "[redacted]");
         }
       }
       return u.toString();
     } catch {
-      return String(url).slice(0, 800);
+      return String(url).slice(0, 500);
     }
   }
 
@@ -40,7 +40,6 @@
           kind,
           page_url: location.href,
           page_title: document.title,
-          page_referrer: document.referrer || "",
           ts: new Date().toISOString(),
           ...data
         }
@@ -50,59 +49,71 @@
 
   function decodeMaybe(data, cb) {
     try {
-      if (typeof data === "string") return cb(data);
+      if (typeof data === "string") {
+        cb(data);
+        return;
+      }
 
       if (data instanceof ArrayBuffer) {
-        try { return cb(new TextDecoder("utf-8").decode(data)); }
-        catch { return post("websocket-binary", { body_type: "arraybuffer", byte_length: data.byteLength }); }
+        try {
+          cb(new TextDecoder("utf-8").decode(data));
+        } catch {
+          post("websocket-binary", { body_type: "arraybuffer", byte_length: data.byteLength });
+        }
+        return;
       }
 
       if (data instanceof Blob) {
-        return data.text().then((txt) => cb(txt)).catch(() => {
+        data.text().then((txt) => cb(txt)).catch(() => {
           post("websocket-binary", { body_type: "blob", byte_length: data.size });
         });
+        return;
       }
 
       cb(String(data));
     } catch {}
   }
 
-  post("hook-installed-v102", { message: "CON War Room v1.0.2 hook active" });
+  // Initial proof that page hook is running.
+  post("hook-installed-v101", { message: "CON War Room v1.0.1 hook active" });
 
+  // Fetch read-only hook.
   const originalFetch = window.fetch;
   if (typeof originalFetch === "function") {
     window.fetch = async function (...args) {
       const response = await originalFetch.apply(this, args);
+
       try {
         const req = args[0];
         const reqUrl = safeUrl(req && (req.url || req));
         const clone = response.clone();
         const contentType = clone.headers.get("content-type") || "";
 
+        // Capture metadata for every fetch.
         post("fetch-meta", {
           request_url: reqUrl,
           status: response.status,
           content_type: contentType
         });
 
-        if (/json|text|plain|javascript|octet|protobuf|binary/i.test(contentType) || response.status === 200) {
+        if (/json|text|plain|javascript|octet/i.test(contentType)) {
           clone.text().then((text) => {
-            if (text && text.length > 0) {
-              post("fetch-response", {
-                request_url: reqUrl,
-                status: response.status,
-                content_type: contentType,
-                body_length: text.length,
-                body: bodyPreview(text)
-              });
-            }
+            post("fetch-response", {
+              request_url: reqUrl,
+              status: response.status,
+              content_type: contentType,
+              body_length: text.length,
+              body: bodyPreview(text)
+            });
           }).catch(() => {});
         }
       } catch {}
+
       return response;
     };
   }
 
+  // XHR read-only hook.
   const OriginalXHR = window.XMLHttpRequest;
   if (OriginalXHR) {
     const originalOpen = OriginalXHR.prototype.open;
@@ -144,6 +155,7 @@
     };
   }
 
+  // WebSocket read-only hook.
   const OriginalWebSocket = window.WebSocket;
   if (OriginalWebSocket) {
     const WrappedWebSocket = function (url, protocols) {
@@ -174,7 +186,9 @@
       });
 
       ws.addEventListener("error", function () {
-        post("websocket-error", { request_url: safe });
+        post("websocket-error", {
+          request_url: safe
+        });
       });
 
       return ws;
@@ -185,6 +199,7 @@
     Object.defineProperty(WrappedWebSocket, "OPEN", { value: OriginalWebSocket.OPEN });
     Object.defineProperty(WrappedWebSocket, "CLOSING", { value: OriginalWebSocket.CLOSING });
     Object.defineProperty(WrappedWebSocket, "CLOSED", { value: OriginalWebSocket.CLOSED });
+
     window.WebSocket = WrappedWebSocket;
   }
 })();

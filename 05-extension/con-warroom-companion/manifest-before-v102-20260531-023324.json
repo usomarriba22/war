@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "CON War Room Companion",
+  "version": "1.0.0",
+  "description": "Read-only telemetry collector for CON War Room.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://*.conflictnations.com/*",
+    "https://conflictnations.com/*",
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://*.conflictnations.com/*", "https://conflictnations.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["page-hook.js"],
+      "matches": ["https://*.conflictnations.com/*", "https://conflictnations.com/*"]
+    }
+  ],
+  "action": {
+    "default_title": "CON War Room",
+    "default_popup": "popup.html"
+  }
+}
