@@ -1,3 +1,191 @@
+# CON War Room v1.0 — Auto Telemetry Companion Extension
+Set-Location "$env:USERPROFILE\Downloads\con-warroom-k8s-starter"
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+New-Item -ItemType Directory -Force -Path ".\05-extension\con-warroom-companion", ".\02-apps\warroom-api\app", ".\02-apps\warroom-api\_legacy" | Out-Null
+$stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+Copy-Item ".\02-apps\warroom-api\app\main.py" ".\02-apps\warroom-api\_legacy\main-before-v100-$stamp.py" -Force -ErrorAction SilentlyContinue
+
+$manifest = @'
+{
+  "manifest_version": 3,
+  "name": "CON War Room Companion",
+  "version": "1.0.0",
+  "description": "Read-only telemetry collector for CON War Room.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://*.conflictnations.com/*",
+    "https://conflictnations.com/*",
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://*.conflictnations.com/*", "https://conflictnations.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["page-hook.js"],
+      "matches": ["https://*.conflictnations.com/*", "https://conflictnations.com/*"]
+    }
+  ],
+  "action": {
+    "default_title": "CON War Room",
+    "default_popup": "popup.html"
+  }
+}
+'@
+[System.IO.File]::WriteAllText("$PWD\05-extension\con-warroom-companion\manifest.json", $manifest, $Utf8NoBom)
+
+$contentJs = @'
+const WARROOM_API = "http://127.0.0.1:8000";
+
+function injectHook() {
+  const s = document.createElement("script");
+  s.src = chrome.runtime.getURL("page-hook.js");
+  s.onload = () => s.remove();
+  (document.documentElement || document.head || document.body).appendChild(s);
+}
+
+async function sendTelemetry(payload) {
+  try {
+    await fetch(`${WARROOM_API}/api/telemetry/ingest`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (e) {}
+}
+
+function collectDomTelemetry(reason = "interval") {
+  const bodyText = (document.body && document.body.innerText) ? document.body.innerText : "";
+  sendTelemetry({
+    source: "chrome-extension-dom",
+    reason,
+    url: location.href,
+    title: document.title,
+    ts: new Date().toISOString(),
+    visible_text: bodyText.slice(0, 25000),
+    meta: { ready_state: document.readyState, element_count: document.querySelectorAll("*").length }
+  });
+}
+
+window.addEventListener("message", (event) => {
+  if (event.source !== window) return;
+  const msg = event.data;
+  if (!msg || msg.__conWarRoom !== true) return;
+  sendTelemetry({
+    source: "chrome-extension-network",
+    ts: new Date().toISOString(),
+    url: location.href,
+    title: document.title,
+    network: msg.payload
+  });
+});
+
+injectHook();
+window.addEventListener("load", () => setTimeout(() => collectDomTelemetry("load"), 1500));
+setInterval(() => collectDomTelemetry("interval"), 5000);
+'@
+[System.IO.File]::WriteAllText("$PWD\05-extension\con-warroom-companion\content.js", $contentJs, $Utf8NoBom)
+
+$pageHook = @'
+(function () {
+  if (window.__conWarRoomHooked) return;
+  window.__conWarRoomHooked = true;
+
+  function safeUrl(url) {
+    try {
+      const u = new URL(String(url), location.href);
+      for (const key of Array.from(u.searchParams.keys())) {
+        if (/token|auth|session|key|jwt|sid|password|pass/i.test(key)) u.searchParams.set(key, "[redacted]");
+      }
+      return u.toString();
+    } catch { return String(url).slice(0, 500); }
+  }
+
+  function looksUseful(text) {
+    if (!text || text.length < 20) return false;
+    const t = text.toLowerCase();
+    return ["resource","supplies","components","fuel","electronics","rare","manpower","money","province","city","unit","army","coalition","research","victory"].some(x => t.includes(x));
+  }
+
+  function post(kind, data) {
+    try {
+      window.postMessage({ __conWarRoom: true, payload: { kind, page_url: location.href, ts: new Date().toISOString(), ...data } }, "*");
+    } catch {}
+  }
+
+  const originalFetch = window.fetch;
+  if (typeof originalFetch === "function") {
+    window.fetch = async function (...args) {
+      const response = await originalFetch.apply(this, args);
+      try {
+        const reqUrl = safeUrl(args[0] && (args[0].url || args[0]));
+        const clone = response.clone();
+        const contentType = clone.headers.get("content-type") || "";
+        if (/json|text|plain/i.test(contentType)) {
+          clone.text().then((text) => {
+            if (looksUseful(text)) {
+              post("fetch-response", { request_url: reqUrl, status: response.status, content_type: contentType, body: text.slice(0, 250000) });
+            }
+          }).catch(() => {});
+        }
+      } catch {}
+      return response;
+    };
+  }
+
+  const OriginalXHR = window.XMLHttpRequest;
+  if (OriginalXHR) {
+    const originalOpen = OriginalXHR.prototype.open;
+    const originalSend = OriginalXHR.prototype.send;
+    OriginalXHR.prototype.open = function (method, url, ...rest) {
+      this.__conWarRoomUrl = safeUrl(url);
+      this.__conWarRoomMethod = method;
+      return originalOpen.call(this, method, url, ...rest);
+    };
+    OriginalXHR.prototype.send = function (...args) {
+      this.addEventListener("load", function () {
+        try {
+          const contentType = this.getResponseHeader("content-type") || "";
+          const text = typeof this.responseText === "string" ? this.responseText : "";
+          if (/json|text|plain/i.test(contentType) && looksUseful(text)) {
+            post("xhr-response", { request_url: this.__conWarRoomUrl, method: this.__conWarRoomMethod, status: this.status, content_type: contentType, body: text.slice(0, 250000) });
+          }
+        } catch {}
+      });
+      return originalSend.apply(this, args);
+    };
+  }
+
+  post("hook-installed", { message: "CON War Room hook active" });
+})();
+'@
+[System.IO.File]::WriteAllText("$PWD\05-extension\con-warroom-companion\page-hook.js", $pageHook, $Utf8NoBom)
+
+$popup = @'
+<!doctype html>
+<html>
+<head><meta charset="utf-8" />
+<style>
+body{width:320px;margin:0;padding:14px;background:#02050b;color:#d8f3ff;font-family:Segoe UI,Arial,sans-serif}
+h1{font-size:16px;margin:0 0 8px;letter-spacing:1px}p{color:#8fb4c7;font-size:12px;line-height:1.4}
+code{color:#3dff9b}.badge{border:1px solid #36d9ff;color:#36d9ff;border-radius:999px;padding:4px 8px;display:inline-block;font-size:11px;font-weight:800}
+</style></head>
+<body>
+<h1>CON War Room Companion</h1><span class="badge">read-only</span>
+<p>Telemetria automatica desde tu navegador hacia API local.</p>
+<p>No mueve unidades. No hace clicks. No captura cookies, headers ni passwords.</p>
+<p>API: <code>http://127.0.0.1:8000</code></p>
+</body></html>
+'@
+[System.IO.File]::WriteAllText("$PWD\05-extension\con-warroom-companion\popup.html", $popup, $Utf8NoBom)
+
+$api = @'
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -208,3 +396,14 @@ def movement(payload: MovementRequest):
     else:
         lines.append("- Sin marcas cargadas.")
     return {"mode": "movement-local-v100", "plan": "\n".join(lines)}
+'@
+[System.IO.File]::WriteAllText("$PWD\02-apps\warroom-api\app\main.py", $api, $Utf8NoBom)
+
+$req = @'
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+'@
+[System.IO.File]::WriteAllText("$PWD\02-apps\warroom-api\requirements.txt", $req, $Utf8NoBom)
+
+Write-Host "v1.0 Auto Telemetry Extension aplicado."
+Write-Host "Extension: 05-extension\con-warroom-companion"
