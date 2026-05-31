@@ -1,25 +1,18 @@
 const WARROOM_API = "http://127.0.0.1:8000";
 
-function gameContextScore() {
+function isGameFrame() {
   const href = location.href || "";
   const ref = document.referrer || "";
-  const title = document.title || "";
-  const joined = `${href} ${ref} ${title}`.toLowerCase();
+  const joined = `${href} ${ref}`.toLowerCase();
 
-  let score = 0;
-  if (joined.includes("conflictnations")) score += 100;
-  if (joined.includes("doradogames")) score += 50;
-  if (joined.includes("bytro")) score += 50;
-  if (joined.includes("supremacy")) score += 30;
-  if (joined.includes("callofwar")) score += 30;
-  if (joined.includes("game")) score += 5;
-  if (joined.includes("client")) score += 5;
-  return score;
-}
-
-function shouldActivate() {
-  // Discovery mode: activate on CON page and child frames referenced by CON.
-  return gameContextScore() > 0;
+  return (
+    joined.includes("conflictnations.com") ||
+    joined.includes("bytro.com") ||
+    joined.includes("doradogames.com") ||
+    joined.includes("con-client") ||
+    joined.includes("congs") ||
+    joined.includes("xgschat")
+  );
 }
 
 async function sendTelemetry(payload) {
@@ -30,26 +23,6 @@ async function sendTelemetry(payload) {
       body: JSON.stringify(payload)
     });
   } catch (e) {}
-}
-
-function frameMeta(reason) {
-  let topSame = false;
-  try { topSame = window.top === window; } catch {}
-  return {
-    source: "chrome-extension-frame",
-    reason,
-    url: location.href,
-    title: document.title,
-    ts: new Date().toISOString(),
-    visible_text: "",
-    meta: {
-      referrer: document.referrer || "",
-      ready_state: document.readyState,
-      element_count: document.querySelectorAll ? document.querySelectorAll("*").length : 0,
-      top_frame: topSame,
-      game_context_score: gameContextScore()
-    }
-  };
 }
 
 function injectHook() {
@@ -70,24 +43,19 @@ function injectHook() {
   }
 }
 
-function collectDomTelemetry(reason = "interval") {
-  let text = "";
-  try {
-    text = (document.body && document.body.innerText) ? document.body.innerText.slice(0, 25000) : "";
-  } catch {}
-
+function sendFrameInventory(reason) {
   sendTelemetry({
-    source: "chrome-extension-dom",
+    source: "chrome-extension-frame",
     reason,
     url: location.href,
     title: document.title,
     ts: new Date().toISOString(),
-    visible_text: text,
+    visible_text: "",
     meta: {
       referrer: document.referrer || "",
       ready_state: document.readyState,
-      element_count: document.querySelectorAll ? document.querySelectorAll("*").length : 0,
-      game_context_score: gameContextScore()
+      top_frame: window.top === window,
+      element_count: document.querySelectorAll ? document.querySelectorAll("*").length : 0
     }
   });
 }
@@ -111,17 +79,14 @@ window.addEventListener("message", (event) => {
   });
 });
 
-// Always send frame inventory for likely CON-related frames.
-if (shouldActivate()) {
-  sendTelemetry(frameMeta("content-script-start"));
+if (isGameFrame()) {
+  sendFrameInventory("content-script-start");
   injectHook();
 
   window.addEventListener("load", () => {
-    setTimeout(() => {
-      sendTelemetry(frameMeta("load"));
-      collectDomTelemetry("load");
-    }, 1000);
+    setTimeout(() => sendFrameInventory("load"), 1000);
   });
 
-  setInterval(() => collectDomTelemetry("interval"), 8000);
+  // heartbeat bajo: solo inventario, no DOM gigante
+  setInterval(() => sendFrameInventory("heartbeat"), 30000);
 }

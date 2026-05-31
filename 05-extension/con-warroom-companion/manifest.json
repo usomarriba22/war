@@ -1,13 +1,25 @@
 {
   "manifest_version": 3,
   "name": "CON War Room Companion",
-  "version": "1.0.2",
-  "description": "Read-only telemetry collector for CON War Room. Discovery mode: all frames, no clicks, no movements.",
+  "version": "1.0.3",
+  "description": "Read-only telemetry collector for CON War Room. Stable mode: CON/Bytro frames only, sanitized URLs, no flood.",
   "permissions": ["storage"],
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": [
+    "https://*.conflictnations.com/*",
+    "https://conflictnations.com/*",
+    "https://*.bytro.com/*",
+    "https://*.doradogames.com/*",
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "https://*.conflictnations.com/*",
+        "https://conflictnations.com/*",
+        "https://*.bytro.com/*",
+        "https://*.doradogames.com/*"
+      ],
       "js": ["content.js"],
       "run_at": "document_start",
       "all_frames": true,
@@ -17,7 +29,12 @@
   "web_accessible_resources": [
     {
       "resources": ["page-hook.js"],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "https://*.conflictnations.com/*",
+        "https://conflictnations.com/*",
+        "https://*.bytro.com/*",
+        "https://*.doradogames.com/*"
+      ]
     }
   ],
   "action": {

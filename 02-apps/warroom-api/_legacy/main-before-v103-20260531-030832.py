@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 import json, re
 
-app = FastAPI(title="CON War Room API", version="1.0.3")
+app = FastAPI(title="CON War Room API", version="1.0.2")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 TELEMETRY_EVENTS: List[dict] = []
@@ -69,11 +69,11 @@ class TelemetryPayload(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "warroom-api", "version": "1.0.3", "time": datetime.now(timezone.utc).isoformat()}
+    return {"status": "ok", "service": "warroom-api", "version": "1.0.2", "time": datetime.now(timezone.utc).isoformat()}
 
 @app.get("/api/status")
 def status():
-    return {"project": "CON War Room", "phase": "v1.0.3-stable-telemetry", "modules": ["telemetry-extension", "auto-ingest", "advisor", "movement"]}
+    return {"project": "CON War Room", "phase": "v1.0.2-allframes-game-network", "modules": ["telemetry-extension", "auto-ingest", "advisor", "movement"]}
 
 def safe_number(value: Any):
     if isinstance(value, bool): return None
@@ -348,40 +348,6 @@ def telemetry_frames(limit: int = 100):
         })
 
     return {"frames": frames[-limit:]}
-
-
-@app.get("/api/telemetry/game-network-light")
-def telemetry_game_network_light(limit: int = 10):
-    limit = max(1, min(limit, 30))
-    items = []
-
-    for event in TELEMETRY_EVENTS:
-        network = event.get("network") or {}
-        if not network:
-            continue
-        body = network.get("body") or ""
-        if is_noise_event(event):
-            continue
-        items.append({
-            "received_at": event.get("received_at"),
-            "kind": network.get("kind"),
-            "domain": event_domain(event),
-            "request_url": network.get("request_url"),
-            "status": network.get("status"),
-            "content_type": network.get("content_type"),
-            "body_length": network.get("body_length") or (len(body) if isinstance(body, str) else 0),
-            "body_preview": body[:300] if isinstance(body, str) else ""
-        })
-
-    return {"network": items[-limit:], "resources": LATEST_RESOURCES}
-
-@app.get("/api/telemetry/latest-resource-state")
-def telemetry_latest_resource_state():
-    return {
-        "resources": LATEST_RESOURCES,
-        "event_count": len(TELEMETRY_EVENTS),
-        "time": datetime.now(timezone.utc).isoformat()
-    }
 
 @app.post("/api/advisor/analyze")
 def advisor(payload: AdvisorRequest):

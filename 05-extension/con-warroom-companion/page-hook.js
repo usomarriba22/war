@@ -1,9 +1,9 @@
 (function () {
-  if (window.__conWarRoomHookedV102) return;
-  window.__conWarRoomHookedV102 = true;
+  if (window.__conWarRoomHookedV103) return;
+  window.__conWarRoomHookedV103 = true;
 
-  const MAX_BODY = 500000;
-  const MAX_EVENTS_PER_MINUTE = 500;
+  const MAX_BODY = 120000;
+  const MAX_EVENTS_PER_MINUTE = 80;
   let eventCounter = 0;
   setInterval(() => { eventCounter = 0; }, 60000);
 
@@ -12,23 +12,30 @@
     return eventCounter <= MAX_EVENTS_PER_MINUTE;
   }
 
-  function safeUrl(url) {
+  function sanitizedUrl(url) {
     try {
       const u = new URL(String(url), location.href);
+      const keep = ["gameID", "uid", "source", "L", "gs", "mapID", "modID", "titleID", "lang"];
       for (const key of Array.from(u.searchParams.keys())) {
-        if (/token|auth|session|key|jwt|sid|password|pass|secret|credential|access/i.test(key)) {
-          u.searchParams.set(key, "[redacted]");
-        }
+        if (!keep.includes(key)) u.searchParams.set(key, "[redacted]");
       }
-      return u.toString();
+      return u.origin + u.pathname + (u.search ? u.search : "");
     } catch {
-      return String(url).slice(0, 800);
+      return String(url).slice(0, 300);
     }
   }
 
-  function bodyPreview(text) {
-    if (text == null) return "";
-    return String(text).slice(0, MAX_BODY);
+  function shortFrameUrl() {
+    try {
+      const u = new URL(location.href);
+      const keep = ["gameID", "uid", "source", "L", "gs", "mapID", "modID", "titleID", "lang"];
+      for (const key of Array.from(u.searchParams.keys())) {
+        if (!keep.includes(key)) u.searchParams.set(key, "[redacted]");
+      }
+      return u.origin + u.pathname + u.search;
+    } catch {
+      return location.href.slice(0, 300);
+    }
   }
 
   function post(kind, data) {
@@ -38,9 +45,9 @@
         __conWarRoom: true,
         payload: {
           kind,
-          page_url: location.href,
+          page_url: shortFrameUrl(),
           page_title: document.title,
-          page_referrer: document.referrer || "",
+          page_referrer: document.referrer ? sanitizedUrl(document.referrer) : "",
           ts: new Date().toISOString(),
           ...data
         }
@@ -48,26 +55,25 @@
     } catch {}
   }
 
-  function decodeMaybe(data, cb) {
-    try {
-      if (typeof data === "string") return cb(data);
-
-      if (data instanceof ArrayBuffer) {
-        try { return cb(new TextDecoder("utf-8").decode(data)); }
-        catch { return post("websocket-binary", { body_type: "arraybuffer", byte_length: data.byteLength }); }
-      }
-
-      if (data instanceof Blob) {
-        return data.text().then((txt) => cb(txt)).catch(() => {
-          post("websocket-binary", { body_type: "blob", byte_length: data.size });
-        });
-      }
-
-      cb(String(data));
-    } catch {}
+  function looksLikeGameState(text, url) {
+    const t = (text || "").slice(0, 4000);
+    const u = String(url || "").toLowerCase();
+    return (
+      u.includes("congs") ||
+      t.includes("UltAutoGameState") ||
+      t.includes("UltMapState") ||
+      t.includes("UltArmyState") ||
+      t.includes("UltResource") ||
+      t.includes("dayOfGame") ||
+      t.includes("stateType")
+    );
   }
 
-  post("hook-installed-v102", { message: "CON War Room v1.0.2 hook active" });
+  function preview(text) {
+    return String(text || "").slice(0, MAX_BODY);
+  }
+
+  post("hook-installed-v103", { message: "CON War Room v1.0.3 hook active" });
 
   const originalFetch = window.fetch;
   if (typeof originalFetch === "function") {
@@ -75,29 +81,25 @@
       const response = await originalFetch.apply(this, args);
       try {
         const req = args[0];
-        const reqUrl = safeUrl(req && (req.url || req));
+        const reqUrl = sanitizedUrl(req && (req.url || req));
         const clone = response.clone();
         const contentType = clone.headers.get("content-type") || "";
 
-        post("fetch-meta", {
-          request_url: reqUrl,
-          status: response.status,
-          content_type: contentType
-        });
-
-        if (/json|text|plain|javascript|octet|protobuf|binary/i.test(contentType) || response.status === 200) {
-          clone.text().then((text) => {
-            if (text && text.length > 0) {
-              post("fetch-response", {
-                request_url: reqUrl,
-                status: response.status,
-                content_type: contentType,
-                body_length: text.length,
-                body: bodyPreview(text)
-              });
-            }
-          }).catch(() => {});
+        if (/congs|bytro|conflictnations/i.test(reqUrl)) {
+          post("fetch-meta", { request_url: reqUrl, status: response.status, content_type: contentType });
         }
+
+        clone.text().then((text) => {
+          if (looksLikeGameState(text, reqUrl)) {
+            post("fetch-response", {
+              request_url: reqUrl,
+              status: response.status,
+              content_type: contentType,
+              body_length: text.length,
+              body: preview(text)
+            });
+          }
+        }).catch(() => {});
       } catch {}
       return response;
     };
@@ -109,7 +111,7 @@
     const originalSend = OriginalXHR.prototype.send;
 
     OriginalXHR.prototype.open = function (method, url, ...rest) {
-      this.__conWarRoomUrl = safeUrl(url);
+      this.__conWarRoomUrl = sanitizedUrl(url);
       this.__conWarRoomMethod = method;
       return originalOpen.call(this, method, url, ...rest);
     };
@@ -120,22 +122,24 @@
           const contentType = this.getResponseHeader("content-type") || "";
           const text = typeof this.responseText === "string" ? this.responseText : "";
 
-          post("xhr-meta", {
-            request_url: this.__conWarRoomUrl,
-            method: this.__conWarRoomMethod,
-            status: this.status,
-            content_type: contentType,
-            body_length: text.length
-          });
+          if (/congs|bytro|conflictnations/i.test(this.__conWarRoomUrl)) {
+            post("xhr-meta", {
+              request_url: this.__conWarRoomUrl,
+              method: this.__conWarRoomMethod,
+              status: this.status,
+              content_type: contentType,
+              body_length: text.length
+            });
+          }
 
-          if (text) {
+          if (looksLikeGameState(text, this.__conWarRoomUrl)) {
             post("xhr-response", {
               request_url: this.__conWarRoomUrl,
               method: this.__conWarRoomMethod,
               status: this.status,
               content_type: contentType,
               body_length: text.length,
-              body: bodyPreview(text)
+              body: preview(text)
             });
           }
         } catch {}
@@ -148,38 +152,24 @@
   if (OriginalWebSocket) {
     const WrappedWebSocket = function (url, protocols) {
       const ws = protocols !== undefined ? new OriginalWebSocket(url, protocols) : new OriginalWebSocket(url);
-      const safe = safeUrl(url);
+      const safe = sanitizedUrl(url);
 
-      post("websocket-open", {
-        request_url: safe,
-        protocol_count: Array.isArray(protocols) ? protocols.length : (protocols ? 1 : 0)
-      });
+      post("websocket-open", { request_url: safe });
 
       ws.addEventListener("message", function (event) {
-        decodeMaybe(event.data, function (txt) {
-          post("websocket-message", {
-            request_url: safe,
-            body_length: txt.length,
-            body: bodyPreview(txt)
-          });
-        });
-      });
-
-      ws.addEventListener("close", function (event) {
-        post("websocket-close", {
-          request_url: safe,
-          code: event.code,
-          reason: event.reason || ""
-        });
-      });
-
-      ws.addEventListener("error", function () {
-        post("websocket-error", { request_url: safe });
+        try {
+          if (typeof event.data === "string" && looksLikeGameState(event.data, safe)) {
+            post("websocket-message", {
+              request_url: safe,
+              body_length: event.data.length,
+              body: preview(event.data)
+            });
+          }
+        } catch {}
       });
 
       return ws;
     };
-
     WrappedWebSocket.prototype = OriginalWebSocket.prototype;
     Object.defineProperty(WrappedWebSocket, "CONNECTING", { value: OriginalWebSocket.CONNECTING });
     Object.defineProperty(WrappedWebSocket, "OPEN", { value: OriginalWebSocket.OPEN });
