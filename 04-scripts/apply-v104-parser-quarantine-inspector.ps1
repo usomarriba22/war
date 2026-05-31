@@ -1,3 +1,19 @@
+
+# CON War Room v1.0.4 — Parser Quarantine + Game State Inspector
+# Ejecutar desde VS Code PowerShell:
+# C:\Users\pmchl\Downloads\con-warroom-k8s-starter
+
+Set-Location "$env:USERPROFILE\Downloads\con-warroom-k8s-starter"
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+$apiPath = ".\02-apps\warroom-api\app\main.py"
+if (!(Test-Path $apiPath)) { throw "No existe API main.py: $apiPath" }
+
+New-Item -ItemType Directory -Force -Path ".\02-apps\warroom-api\_legacy" | Out-Null
+$stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+Copy-Item $apiPath ".\02-apps\warroom-api\_legacy\main-before-v104-$stamp.py" -Force -ErrorAction SilentlyContinue
+
+$api = @'
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -192,7 +208,7 @@ def store_game_state(body: str, network: dict):
 
     summary = summarize_game_state(parsed, body, network)
 
-    # Guardamos full body en memoria para inspecciÃ³n controlada.
+    # Guardamos full body en memoria para inspección controlada.
     snap = {
         "received_at": summary["received_at"],
         "summary": summary,
@@ -206,7 +222,7 @@ def store_game_state(body: str, network: dict):
 
 def extract_explicit_resources(parsed: Any):
     """
-    Parser seguro: SOLO actualiza recursos si existe una estructura explÃ­cita con los 7 nombres.
+    Parser seguro: SOLO actualiza recursos si existe una estructura explícita con los 7 nombres.
     Ya no hacemos generic scan por paths porque eso generaba basura:
     components=5, fuel=0, electronics=1, manpower=-60, etc.
     """
@@ -314,7 +330,7 @@ def ingest_telemetry(payload: TelemetryPayload):
         if looks_like_game_state_body(body):
             game_state_summary = store_game_state(body, network)
 
-        # Solo aceptar recursos si vienen en una estructura explÃ­cita.
+        # Solo aceptar recursos si vienen en una estructura explícita.
         if parsed is not None:
             candidates = extract_explicit_resources(parsed)
 
@@ -572,3 +588,14 @@ ORDEN PRACTICA:
 4. No ejecutes movimientos caros si fuel/rares/electronica siguen bajos.
 """
     return {"mode": "movement-local-v104", "plan": plan}
+'@
+
+[System.IO.File]::WriteAllText((Resolve-Path $apiPath), $api, $Utf8NoBom)
+
+Write-Host "v1.0.4 Parser Quarantine + Inspector aplicado."
+Write-Host "Siguiente:"
+Write-Host "1) git add . ; git commit -m 'Quarantine unsafe resource parser and add game state inspector' ; git push"
+Write-Host "2) Build warroom-api + rollout restart"
+Write-Host "3) POST /api/telemetry/clear"
+Write-Host "4) Abrir una partida desde cero"
+Write-Host "5) Probar /api/telemetry/game-state-snapshots y /api/telemetry/candidate-paths"
