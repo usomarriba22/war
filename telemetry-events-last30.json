@@ -1,0 +1,604 @@
+﻿{
+    "events":  [
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:31.285Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10804876\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,804,876",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:29.847560+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:32.463Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10809843\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,809,843",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:31.025415+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:34.606Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10808846\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,808,846",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:33.169390+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:35.285Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10814478\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,814,478",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  49
+                                },
+                       "received_at":  "2026-05-31T00:21:33.847573+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:36.284Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10804876\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,804,876",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:34.847410+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:37.463Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10809843\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,809,843",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:36.026168+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:39.401Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10808846\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,808,846",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:37.964166+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:40.286Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10814478\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,814,478",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  49
+                                },
+                       "received_at":  "2026-05-31T00:21:38.847685+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:41.281Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10804876\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,804,876",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:39.843191+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:42.466Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10809843\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,809,843",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:41.029484+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:44.408Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10808846\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,808,846",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:42.970728+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:45.278Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10814478\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,814,478",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  49
+                                },
+                       "received_at":  "2026-05-31T00:21:43.841638+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:46.283Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10804876\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,804,876",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:44.845895+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:47.469Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10809843\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,809,843",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:46.029886+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:49.410Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10808846\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,808,846",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:47.973350+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:50.283Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10814478\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,814,478",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  49
+                                },
+                       "received_at":  "2026-05-31T00:21:48.852047+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:51.286Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10804876\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,804,876",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:49.849064+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:52.474Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10809843\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,809,843",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:51.034601+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:54.401Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10808846\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,808,846",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:52.963511+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:55.287Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10814478\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,814,478",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  49
+                                },
+                       "received_at":  "2026-05-31T00:21:53.848803+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:56.289Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10804876\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,804,876",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:54.851657+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:57.475Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10809843\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,809,843",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:56.037045+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:21:59.404Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10808846\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,808,846",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:57.965506+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:22:00.289Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10814478\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,814,478",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  49
+                                },
+                       "received_at":  "2026-05-31T00:21:58.853084+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:22:01.278Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10804876\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,804,876",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:21:59.842634+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:22:02.479Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10809843\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,809,843",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:22:01.040187+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:22:04.404Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10808846\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,808,846",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:22:02.965755+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:22:05.290Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10814478\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,814,478",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  49
+                                },
+                       "received_at":  "2026-05-31T00:22:03.852325+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:22:06.280Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10804876\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,804,876",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:22:04.843168+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   },
+                   {
+                       "source":  "chrome-extension-dom",
+                       "ts":  "2026-05-31T00:22:07.477Z",
+                       "url":  "https://www.conflictnations.com/play.php?L=3\u0026bust=1\u0026uid=82054027\u0026gameID=10809843\u0026source=browser-desktop",
+                       "title":  "World War 3 - 10,809,843",
+                       "visible_text":  "",
+                       "network":  null,
+                       "reason":  "interval",
+                       "meta":  {
+                                    "ready_state":  "complete",
+                                    "element_count":  48
+                                },
+                       "received_at":  "2026-05-31T00:22:06.040628+00:00",
+                       "resource_candidates":  {
+
+                                               },
+                       "resource_changes":  {
+
+                                            }
+                   }
+               ]
+}

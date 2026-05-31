@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 import json, re
 
-app = FastAPI(title="CON War Room API", version="1.0.1")
+app = FastAPI(title="CON War Room API", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 TELEMETRY_EVENTS: List[dict] = []
@@ -41,11 +41,11 @@ class TelemetryPayload(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "warroom-api", "version": "1.0.1", "time": datetime.now(timezone.utc).isoformat()}
+    return {"status": "ok", "service": "warroom-api", "version": "1.0.0", "time": datetime.now(timezone.utc).isoformat()}
 
 @app.get("/api/status")
 def status():
-    return {"project": "CON War Room", "phase": "v1.0.1-network-websocket-debug", "modules": ["telemetry-extension", "auto-ingest", "advisor", "movement"]}
+    return {"project": "CON War Room", "phase": "v1.0-auto-telemetry", "modules": ["telemetry-extension", "auto-ingest", "advisor", "movement"]}
 
 def safe_number(value: Any):
     if isinstance(value, bool): return None
@@ -180,66 +180,6 @@ Orden:
 Pregunta:
 {question}
 """
-
-
-@app.get("/api/telemetry/debug")
-def telemetry_debug(limit: int = 30):
-    limit = max(1, min(limit, 100))
-    recent = TELEMETRY_EVENTS[-limit:]
-
-    by_source = {}
-    by_kind = {}
-    network_events = []
-
-    for event in recent:
-        source = event.get("source") or "unknown"
-        by_source[source] = by_source.get(source, 0) + 1
-
-        network = event.get("network") or {}
-        kind = network.get("kind") or event.get("reason") or "unknown"
-        by_kind[kind] = by_kind.get(kind, 0) + 1
-
-        if network:
-            body = network.get("body") or ""
-            network_events.append({
-                "ts": event.get("received_at"),
-                "kind": kind,
-                "request_url": network.get("request_url"),
-                "status": network.get("status"),
-                "content_type": network.get("content_type"),
-                "body_length": network.get("body_length") or len(body),
-                "body_preview": body[:500] if isinstance(body, str) else ""
-            })
-
-    return {
-        "total_stored": len(TELEMETRY_EVENTS),
-        "recent_count": len(recent),
-        "by_source": by_source,
-        "by_kind": by_kind,
-        "network_events": network_events[-limit:],
-        "resources": LATEST_RESOURCES
-    }
-
-@app.get("/api/telemetry/network")
-def telemetry_network(limit: int = 20):
-    limit = max(1, min(limit, 100))
-    items = []
-    for event in TELEMETRY_EVENTS:
-        network = event.get("network") or {}
-        if not network:
-            continue
-        body = network.get("body") or ""
-        items.append({
-            "received_at": event.get("received_at"),
-            "source": event.get("source"),
-            "kind": network.get("kind"),
-            "request_url": network.get("request_url"),
-            "status": network.get("status"),
-            "content_type": network.get("content_type"),
-            "body_length": network.get("body_length") or (len(body) if isinstance(body, str) else 0),
-            "body_preview": body[:1000] if isinstance(body, str) else ""
-        })
-    return {"network": items[-limit:]}
 
 @app.post("/api/advisor/analyze")
 def advisor(payload: AdvisorRequest):
